@@ -21,7 +21,7 @@
                 <i data-lucide="utensils-crossed" class="w-8 h-8 text-white"></i>
             </div>
             <h1 class="text-2xl font-bold text-foreground mb-2 tracking-tight">
-                Restaurant Management System
+                RestaurantSaga
             </h1>
             <p class="text-muted-foreground text-sm font-medium">Internal Restaurant Portal</p>
         </div>

@@ -21,7 +21,7 @@
                 <i data-lucide="utensils-crossed" class="w-8 h-8 text-white"></i>
             </div>
             <h1 class="text-2xl font-bold text-foreground mb-2 tracking-tight">
-                Restaurant Management System
+                RestaurantSaga
             </h1>
             <p class="text-muted-foreground text-sm font-medium">Admin Dashboard Access</p>
         </div>
@@ -88,7 +88,7 @@
 
         <div class="text-center">
             <p class="text-muted-foreground/40 text-[13px] tracking-wide">
-                © 2025 Restaurant Management System. All rights reserved.
+                © 2025 RestaurantSaga. All rights reserved.
             </p>
         </div>
 

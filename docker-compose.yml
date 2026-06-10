@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
 
-    container_name: restaurant_saga
+    container_name: restaurantsaga_app
 
     volumes:
       - .:/var/www
@@ -18,7 +18,7 @@ services:
   nginx:
     image: nginx:latest
 
-    container_name: restaurant_nginx
+    container_name: restaurantsaga_nginx
 
     ports:
       - "8080:80"
@@ -33,12 +33,12 @@ services:
   mysql:
     image: mysql:8
 
-    container_name: restaurant_mysql
+    container_name: restaurantsaga_mysql
 
     restart: always
 
     environment:
-      MYSQL_DATABASE: restaurant_saga
+      MYSQL_DATABASE: restaurantsaga
       MYSQL_ROOT_PASSWORD: root
       MYSQL_USER: restaurant
       MYSQL_PASSWORD: restaurant
@@ -49,14 +49,14 @@ services:
   redis:
     image: redis:alpine
 
-    container_name: restaurant_redis
+    container_name: restaurantsaga_redis
 
   queue:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
 
-    container_name: restaurant_queue
+    container_name: restaurantsaga_queue
 
     command: php artisan queue:work
 
@@ -72,7 +72,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
 
-    container_name: restaurant_reverb
+    container_name: restaurantsaga_reverb
 
     command: php artisan reverb:start --host=0.0.0.0 --port=8081
 
@@ -91,7 +91,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
 
-    container_name: restaurant_scheduler
+    container_name: restaurantsaga_scheduler
 
     command: >
       sh -c "while true; do php artisan schedule:run; sleep 60; done"

@@ -1,0 +1,94 @@
+# ==============================================================================
+# Stage 1: Build Frontend Assets
+# ==============================================================================
+FROM node:20-alpine AS node_modules
+
+WORKDIR /var/www
+
+# Copy only package.json and package-lock.json to leverage Docker caching
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy the rest of the application files necessary for building assets
+COPY vite.config.js ./
+COPY resources/ ./resources/
+COPY public/ ./public/
+
+# Build assets
+RUN npm run build
+
+# ==============================================================================
+# Stage 2: Install PHP Dependencies
+# ==============================================================================
+FROM composer:2.7 AS vendor
+
+WORKDIR /var/www
+
+# Copy composer files
+COPY composer.json composer.lock ./
+
+# Install dependencies (no dev, optimized autoloader)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --ignore-platform-reqs
+
+# ==============================================================================
+# Stage 3: Final Application Image
+# ==============================================================================
+FROM php:8.4-fpm-alpine
+
+# Set working directory
+WORKDIR /var/www
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    oniguruma-dev \
+    sqlite-dev \
+    mysql-client
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql pdo_sqlite mbstring zip opcache pcntl bcmath exif
+
+# Install Redis extension via PECL
+RUN apk add --no-cache pcre-dev $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS
+
+# Copy custom PHP configuration
+COPY docker/production/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+# Copy entrypoint script
+COPY docker/production/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Copy frontend build from Stage 1
+COPY --from=node_modules /var/www/public/build ./public/build
+
+# Copy vendor directory from Stage 2
+COPY --from=vendor /var/www/vendor ./vendor
+
+# Copy the rest of the application codebase
+COPY . .
+
+# Remove unnecessary files
+RUN rm -rf docker node_modules resources/js resources/css tests
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache
+
+# Use the custom entrypoint to cache routes and config on startup
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Expose port 9000 and start php-fpm server
+EXPOSE 9000
+CMD ["php-fpm"]
