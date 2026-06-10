@@ -86,6 +86,9 @@ RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage \
     && chmod -R 775 /var/www/bootstrap/cache
 
+# Save a pristine copy of the public directory for the entrypoint to sync to the Nginx volume
+RUN cp -R /var/www/public /var/www/public_source
+
 # Use the custom entrypoint to cache routes and config on startup
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
