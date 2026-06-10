@@ -106,11 +106,13 @@ class Orders extends Component
 
     public function getStatusCountsProperty()
     {
-        return Order::select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status.value')
-            ->toArray();
+        return \Illuminate\Support\Facades\Cache::remember('admin.orders.status_counts', 15, function () {
+            return Order::select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get()
+                ->pluck('count', 'status.value')
+                ->toArray();
+        });
     }
 
     public function render()

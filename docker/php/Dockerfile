@@ -30,12 +30,17 @@ RUN docker-php-ext-install \
     pcntl \
     bcmath \
     gd \
-    zip
+    zip \
+    opcache
 
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy custom PHP config
+COPY ./docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY ./docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 WORKDIR /var/www
 

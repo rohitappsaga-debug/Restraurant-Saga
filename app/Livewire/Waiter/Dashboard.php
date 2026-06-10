@@ -31,7 +31,7 @@ class Dashboard extends Component
         return [
             "echo:orders,ItemStatusUpdated" => 'onItemStatusUpdated',
             "echo:orders,TableStatusChanged" => '$refresh',
-            "echo:menu-updates,MenuAvailabilityUpdated" => '$refresh',
+            "echo:menu-updates,.MenuAvailabilityUpdated" => '$refresh',
         ];
     }
 

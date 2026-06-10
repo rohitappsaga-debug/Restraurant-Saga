@@ -32,12 +32,10 @@ class KOTService
                 'sent_at' => now(),
             ]);
 
-            foreach ($pendingItems as $item) {
-                $item->update([
-                    'kot_id' => $kot->id,
-                    'status' => OrderStatus::SENT,
-                ]);
-            }
+            OrderItem::whereIn('id', $pendingItems->pluck('id'))->update([
+                'kot_id' => $kot->id,
+                'status' => OrderStatus::SENT,
+            ]);
 
             return $kot;
         });

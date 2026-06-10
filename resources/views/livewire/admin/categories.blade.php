@@ -273,10 +273,9 @@
                     </button>
                     <button 
                         wire:click="save"
-                        class="flex-[2] h-16 bg-gradient-to-r from-primary to-primary/80 text-white font-extrabold text-base rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        class="flex-[2] h-16 bg-gradient-to-r from-primary to-primary/80 text-white font-black text-base rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
-                        <span>{{ $editingCategoryId ? 'Update Changes' : 'Confirm & Create' }}</span>
-                        <i data-lucide="check" class="size-5"></i>
+                        {{ $editingCategoryId ? 'Update Changes' : 'Confirm & Create' }}
                     </button>
                 </div>
             </div>
@@ -347,9 +346,8 @@
 
                 <button 
                     wire:click="saveBulk"
-                    class="w-full h-16 bg-gradient-to-r from-primary to-primary/80 text-white font-black text-lg rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                    class="w-full h-16 bg-gradient-to-r from-primary to-primary/80 text-white font-black text-lg rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                    <i data-lucide="zap" class="w-5 h-5"></i>
                     Process Everything
                 </button>
             </div>

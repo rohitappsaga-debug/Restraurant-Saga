@@ -1,4 +1,4 @@
-<div class="space-y-8" wire:poll.5s>
+<div class="space-y-8">
     <!-- Header -->
     <div class="bg-card/60 backdrop-blur-md border-b border-border p-6 sticky top-0 z-50 shadow-sm rounded-b-[2.5rem]">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -13,7 +13,7 @@
                     </p>
                     <span class="text-foreground/40">—</span>
                     <p class="text-foreground/60 text-sm font-bold">
-                        <span class="text-foreground">{{ $counts['all'] }}</span> Active Orders
+                        <span class="text-foreground">{{ $this->counts['all'] }}</span> Active Orders
                     </p>
                 </div>
             </div>
@@ -86,7 +86,7 @@
                     >
                         {{ strtoupper($label) }}
                         <span class="rounded-full size-5 flex items-center justify-center text-[9px] font-black {{ $activeTab === $statusKey ? 'bg-black/20' : 'bg-muted text-muted-foreground' }}">
-                            {{ $counts[$statusKey] }}
+                            {{ $this->counts[$statusKey] }}
                         </span>
                     </button>
                 @endforeach
@@ -97,8 +97,9 @@
     <!-- Main Content -->
     <div class="flex-1 px-6 pb-20">
         @if($view === 'orders')
-            @php
-                $filteredSessions = $sessions->filter(function($session) use ($activeTab) {
+            <div wire:poll.5s>
+                @php
+                $filteredSessions = $this->sessions->filter(function($session) use ($activeTab) {
                     if ($activeTab === 'all') return true;
                     return $session->orders->flatMap(fn($o) => $o->orderItems)->contains(function($item) use ($activeTab) {
                         $status = $item->status instanceof \App\Enums\OrderStatus ? $item->status->value : (is_object($item->status) ? $item->status->value : $item->status);
@@ -261,6 +262,7 @@
                     @endforeach
                 </div>
             @endif
+            </div>
         @else
             <!-- Menu Manager View -->
             <div class="p-6 space-y-8">
@@ -275,7 +277,7 @@
                         />
                     </div>
                     <div class="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide">
-                        @foreach($menuCategories as $category)
+                        @foreach($this->menuCategories as $category)
                             <button
                                 wire:click="$set('selectedMenuCategory', '{{ $category }}')"
                                 class="h-10 px-6 rounded-full font-bold text-xs uppercase tracking-widest whitespace-nowrap transition-all {{ $selectedMenuCategory === $category ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-secondary text-muted-foreground border border-border/50 hover:bg-muted' }}"
@@ -287,7 +289,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-                    @forelse($menuItems as $item)
+                    @forelse($this->menuItems as $item)
                         <div class="group aspect-square relative p-5 bg-card border-2 border-border/50 rounded-[2.5rem] flex flex-col transition-all duration-300 {{ $item->available ? 'hover:border-primary shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1' : 'border-rose-500/30 bg-rose-500/[0.02]' }}">
                             <!-- Image Container -->
                             <div class="flex-1 w-full rounded-[1.75rem] mb-4 overflow-hidden border border-border/10 bg-muted/30 relative shrink-0">

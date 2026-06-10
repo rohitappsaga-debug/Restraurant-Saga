@@ -18,37 +18,45 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Seed Users
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@restaurant.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::ADMIN,
-            'active' => true,
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@restaurant.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+                'role' => UserRole::ADMIN,
+                'active' => true,
+            ]
+        );
         
-        User::create([
-            'name' => 'Test Waiter',
-            'email' => 'waiter@restaurant.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::WAITER,
-            'active' => true,
-        ]);
+        User::updateOrCreate(
+            ['email' => 'waiter@restaurant.com'],
+            [
+                'name' => 'Test Waiter',
+                'password' => Hash::make('password'),
+                'role' => UserRole::WAITER,
+                'active' => true,
+            ]
+        );
 
-        User::create([
-            'name' => 'Kitchen Staff',
-            'email' => 'kitchen@restaurant.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::KITCHEN,
-            'active' => true,
-        ]);
+        User::updateOrCreate(
+            ['email' => 'kitchen@restaurant.com'],
+            [
+                'name' => 'Kitchen Staff',
+                'password' => Hash::make('password'),
+                'role' => UserRole::KITCHEN,
+                'active' => true,
+            ]
+        );
 
-        User::create([
-            'name' => 'Restaurant Manager',
-            'email' => 'manager@restaurant.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::MANAGER,
-            'active' => true,
-        ]);
+        User::updateOrCreate(
+            ['email' => 'manager@restaurant.com'],
+            [
+                'name' => 'Restaurant Manager',
+                'password' => Hash::make('password'),
+                'role' => UserRole::MANAGER,
+                'active' => true,
+            ]
+        );
 
         // 2. Seed Tables
         $tableData = [
@@ -65,14 +73,14 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($tableData as $t) {
-            Table::create($t);
+            Table::updateOrCreate(['number' => $t['number']], $t);
         }
 
         // 3. Seed Categories
-        $catStarters = Category::create(['name' => 'Starters', 'description' => 'Appetizers and quick bites', 'is_active' => true]);
-        $catMains = Category::create(['name' => 'Main Course', 'description' => 'Hearty meals and entrees', 'is_active' => true]);
-        $catDrinks = Category::create(['name' => 'Beverages', 'description' => 'Refreshing drinks and sodas', 'is_active' => true]);
-        $catDesserts = Category::create(['name' => 'Desserts', 'description' => 'Sweet treats to end your meal', 'is_active' => true]);
+        $catStarters = Category::updateOrCreate(['name' => 'Starters'], ['description' => 'Appetizers and quick bites', 'is_active' => true]);
+        $catMains = Category::updateOrCreate(['name' => 'Main Course'], ['description' => 'Hearty meals and entrees', 'is_active' => true]);
+        $catDrinks = Category::updateOrCreate(['name' => 'Beverages'], ['description' => 'Refreshing drinks and sodas', 'is_active' => true]);
+        $catDesserts = Category::updateOrCreate(['name' => 'Desserts'], ['description' => 'Sweet treats to end your meal', 'is_active' => true]);
 
         // 4. Seed Menu Items
         $menuItems = [
@@ -98,7 +106,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($menuItems as $item) {
-            MenuItem::create($item);
+            MenuItem::updateOrCreate(['name' => $item['name']], $item);
         }
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Enums\TableStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -24,67 +25,63 @@ class Dashboard extends Component
     public $peakHour = '--:--';
     public $peakLabel = 'Peak Hour';
 
-    #[Layout('layouts.admin')]
-    public function render()
+    public function mount()
     {
         $this->loadStats();
         $this->loadChartData();
+    }
 
-        $liveOrders = Order::with(['table', 'orderItems.menuItem'])
-            ->whereIn('status', [OrderStatus::PENDING, OrderStatus::PREPARING, OrderStatus::READY])
-            ->where('created_at', '>=', now()->subHours(12))
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-        return view('livewire.admin.dashboard', [
-            'liveOrders' => $liveOrders
-        ]);
+    #[Layout('layouts.admin')]
+    public function render()
+    {
+        return view('livewire.admin.dashboard');
     }
 
     public function updatedPeriod()
     {
-        // Stats will be reloaded on next render
+        $this->loadStats();
+        $this->loadChartData();
     }
 
     private function loadStats()
     {
-        $query = Order::where('is_paid', true);
+        $cacheKey = "admin.dashboard.stats.{$this->period}";
+        
+        $stats = Cache::remember($cacheKey, 300, function () {
+            $revenueQuery = Order::where('is_paid', true);
+            $orderQuery = Order::query();
 
-        switch ($this->period) {
-            case 'today':
-                $query->whereDate('created_at', Carbon::today());
-                break;
-            case 'week':
-                $query->where('created_at', '>=', now()->startOfWeek());
-                break;
-            case 'month':
-                $query->where('created_at', '>=', now()->startOfMonth());
-                break;
-        }
+            switch ($this->period) {
+                case 'today':
+                    $revenueQuery->whereDate('created_at', Carbon::today());
+                    $orderQuery->whereDate('created_at', Carbon::today());
+                    break;
+                case 'week':
+                    $revenueQuery->where('created_at', '>=', now()->startOfWeek());
+                    $orderQuery->where('created_at', '>=', now()->startOfWeek());
+                    break;
+                case 'month':
+                    $revenueQuery->where('created_at', '>=', now()->startOfMonth());
+                    $orderQuery->where('created_at', '>=', now()->startOfMonth());
+                    break;
+            }
 
-        // Revenue
-        $this->dailyRevenue = (float) $query->sum('total');
+            return [
+                'revenue' => (float) $revenueQuery->sum('total'),
+                'orders' => $orderQuery->count(),
+            ];
+        });
 
-        // Orders (including unpaid ones for volume)
-        $orderQuery = Order::query();
-        switch ($this->period) {
-            case 'today':
-                $orderQuery->whereDate('created_at', Carbon::today());
-                break;
-            case 'week':
-                $orderQuery->where('created_at', '>=', now()->startOfWeek());
-                break;
-            case 'month':
-                $orderQuery->where('created_at', '>=', now()->startOfMonth());
-                break;
-        }
-        $this->todayOrders = $orderQuery->count();
+        $this->dailyRevenue = $stats['revenue'];
+        $this->todayOrders = $stats['orders'];
 
-        // Occupancy Rate (Always Live)
-        $totalTables = Table::count();
-        $occupiedTables = Table::where('status', TableStatus::OCCUPIED)->count();
-        $this->occupancyRate = $totalTables > 0 ? round(($occupiedTables / $totalTables) * 100) : 0;
+        // Occupancy Rate (Always Live, cached for 1 min)
+        $this->occupancyRate = Cache::remember('admin.dashboard.occupancy', 60, function () {
+            $stats = Table::selectRaw('COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as occupied', [TableStatus::OCCUPIED])->first();
+            $totalTables = $stats->total ?? 0;
+            $occupiedTables = $stats->occupied ?? 0;
+            return $totalTables > 0 ? round(($occupiedTables / $totalTables) * 100) : 0;
+        });
     }
 
     private function loadChartData()
@@ -119,16 +116,20 @@ class Dashboard extends Component
 
     private function loadHourlySales()
     {
-        $sales = Order::whereDate('created_at', Carbon::today())
-            ->where('is_paid', true)
-            ->select(
-                DB::raw("EXTRACT(HOUR FROM created_at) as hour"),
-                DB::raw("SUM(total) as total")
-            )
-            ->groupBy('hour')
-            ->get()
-            ->pluck('total', 'hour')
-            ->toArray();
+        $cacheKey = "admin.dashboard.charts.hourly." . Carbon::today()->format('Y-m-d');
+        
+        $sales = Cache::remember($cacheKey, 300, function () {
+            return Order::whereDate('created_at', Carbon::today())
+                ->where('is_paid', true)
+                ->select(
+                    DB::raw("EXTRACT(HOUR FROM created_at) as hour"),
+                    DB::raw("SUM(total) as total")
+                )
+                ->groupBy('hour')
+                ->get()
+                ->pluck('total', 'hour')
+                ->toArray();
+        });
 
         $this->hourlySales = array_fill(0, 24, 0);
         $this->chartLabels = array_map(fn($h) => sprintf('%02d:00', $h), range(0, 23));
@@ -151,18 +152,21 @@ class Dashboard extends Component
     private function loadDailySales($days)
     {
         $startDate = now()->subDays($days - 1)->startOfDay();
+        $cacheKey = "admin.dashboard.charts.daily.{$days}." . Carbon::today()->format('Y-m-d');
         
-        $sales = Order::where('created_at', '>=', $startDate)
-            ->where('is_paid', true)
-            ->select(
-                DB::raw("DATE(created_at) as date"),
-                DB::raw("SUM(total) as total")
-            )
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->pluck('total', 'date')
-            ->toArray();
+        $sales = Cache::remember($cacheKey, 3600, function () use ($startDate) {
+            return Order::where('created_at', '>=', $startDate)
+                ->where('is_paid', true)
+                ->select(
+                    DB::raw("DATE(created_at) as date"),
+                    DB::raw("SUM(total) as total")
+                )
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get()
+                ->pluck('total', 'date')
+                ->toArray();
+        });
 
         $this->hourlySales = [];
         $this->chartLabels = [];
@@ -189,20 +193,23 @@ class Dashboard extends Component
     private function loadMonthlySales()
     {
         $startDate = now()->subMonths(11)->startOfMonth();
+        $cacheKey = "admin.dashboard.charts.monthly." . Carbon::today()->format('Y-m');
         
-        $sales = Order::where('created_at', '>=', $startDate)
-            ->where('is_paid', true)
-            ->select(
-                DB::raw("EXTRACT(YEAR FROM created_at) as year"),
-                DB::raw("EXTRACT(MONTH FROM created_at) as month"),
-                DB::raw("SUM(total) as total")
-            )
-            ->groupBy('year', 'month')
-            ->get()
-            ->mapWithKeys(function($item) {
-                return [sprintf('%d-%02d', $item->year, $item->month) => (float)$item->total];
-            })
-            ->toArray();
+        $sales = Cache::remember($cacheKey, 86400, function () use ($startDate) {
+            return Order::where('created_at', '>=', $startDate)
+                ->where('is_paid', true)
+                ->select(
+                    DB::raw("EXTRACT(YEAR FROM created_at) as year"),
+                    DB::raw("EXTRACT(MONTH FROM created_at) as month"),
+                    DB::raw("SUM(total) as total")
+                )
+                ->groupBy('year', 'month')
+                ->get()
+                ->mapWithKeys(function($item) {
+                    return [sprintf('%d-%02d', $item->year, $item->month) => (float)$item->total];
+                })
+                ->toArray();
+        });
 
         $this->hourlySales = [];
         $this->chartLabels = [];

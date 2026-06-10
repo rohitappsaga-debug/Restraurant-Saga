@@ -50,18 +50,22 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2" x-data="{ showPassword: false }">
                     <label for="password" class="text-sm font-semibold text-foreground/90 pl-1">Password</label>
                     <div class="relative group">
                         <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/40 group-focus-within:text-primary transition-colors"></i>
                         <input
                             id="password"
-                            type="password"
+                            x-bind:type="showPassword ? 'text' : 'password'"
                             wire:model="password"
                             placeholder="........"
-                            class="w-full h-12 pl-12 pr-4 bg-muted/30 border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                            class="w-full h-12 pl-12 pr-12 bg-muted/30 border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                             required
                         />
+                        <button type="button" @click="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors focus:outline-none">
+                            <i x-show="!showPassword" data-lucide="eye" class="w-5 h-5"></i>
+                            <i x-show="showPassword" data-lucide="eye-off" class="w-5 h-5" style="display: none;"></i>
+                        </button>
                     </div>
                 </div>
 

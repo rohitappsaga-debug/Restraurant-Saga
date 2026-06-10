@@ -15,7 +15,7 @@
                 @click="$wire.openCreate()"
                 class="h-12 px-8 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] border-0 rounded-2xl font-bold flex items-center gap-3"
             >
-                <i data-lucide="plus-circle" class="size-5"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                 Add New Item
             </button>
         </div>
@@ -300,20 +300,20 @@
                                         class="size-11 rounded-2xl flex items-center justify-center text-white bg-gradient-to-tr from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 transition-all shadow-lg shadow-purple-500/20 disabled:opacity-50 group/ai relative"
                                         title="Generate AI Image"
                                     >
-                                        <i data-lucide="sparkles" class="size-5" wire:loading.remove wire:target="confirmAIImageGeneration('{{ $item->id }}'), generateAIImage('{{ $item->id }}')"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" wire:loading.remove wire:target="confirmAIImageGeneration('{{ $item->id }}'), generateAIImage('{{ $item->id }}')"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>
                                         <div wire:loading wire:target="confirmAIImageGeneration('{{ $item->id }}'), generateAIImage('{{ $item->id }}')">
                                             <i data-lucide="refresh-cw" class="size-5 animate-spin"></i>
                                         </div>
                                     </button>
                                     <button wire:click="openEdit('{{ $item->id }}')" class="size-11 rounded-2xl flex items-center justify-center text-muted-foreground border border-border hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all shadow-sm">
-                                        <i data-lucide="edit" class="size-5"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                                     </button>
                                     <button 
                                         wire:confirm="Are you sure you want to delete this item? This action cannot be undone."
                                         wire:click="delete('{{ $item->id }}')" 
                                         class="size-11 rounded-2xl flex items-center justify-center text-muted-foreground border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all shadow-sm"
                                     >
-                                        <i data-lucide="trash-2" class="size-5"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                     </button>
                                 </div>
                             </td>
@@ -385,7 +385,7 @@
                     <p class="text-muted-foreground font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Menu Inventory Registry</p>
                 </div>
                 <button @click="showAddDialog = false" class="size-14 flex items-center justify-center rounded-[1.5rem] bg-muted/40 hover:bg-muted/60 transition-colors border border-border">
-                    <i data-lucide="x" class="size-6 text-muted-foreground"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6 text-muted-foreground"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
 

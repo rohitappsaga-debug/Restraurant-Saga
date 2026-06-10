@@ -10,6 +10,21 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        minify: 'esbuild',
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        return 'vendor';
+                    }
+                }
+            }
+        }
+    },
+    esbuild: {
+        drop: ['console', 'debugger'],
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

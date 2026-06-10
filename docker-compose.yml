@@ -67,6 +67,25 @@ services:
       - app
       - redis
 
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: restaurant_reverb
+
+    command: php artisan reverb:start --host=0.0.0.0 --port=8081
+
+    ports:
+      - "8081:8081"
+
+    volumes:
+      - .:/var/www
+
+    depends_on:
+      - app
+      - redis
+
   scheduler:
     build:
       context: .

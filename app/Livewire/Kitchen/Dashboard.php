@@ -8,8 +8,10 @@ use App\Models\MenuItem;
 use App\Models\TableSession;
 use App\Enums\OrderStatus;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Computed;
 
 class Dashboard extends Component
 {
@@ -23,7 +25,7 @@ class Dashboard extends Component
     public function getListeners()
     {
         return [
-            "echo:kitchen,KOTCreated" => 'onNewOrder',
+            "echo:kitchen,.KOTCreated" => 'onNewOrder',
         ];
     }
 
@@ -33,37 +35,71 @@ class Dashboard extends Component
         $this->dispatch('notify', message: "New Order for Table " . ($data['table_number'] ?? '#?'), type: 'info');
     }
 
-    #[Layout('layouts.kitchen')]
-    public function render()
+    #[Computed]
+    public function sessions()
     {
-        // One large group card per table:
-        // We fetch sessions that are active
-        $sessions = TableSession::with(['table', 'orders.orderItems.menuItem', 'orders.orderItems.kot'])
+        return TableSession::with(['table', 'orders.orderItems.menuItem', 'orders.orderItems.kot'])
             ->where('status', 'active')
             ->get();
+    }
 
-        $menuItems = MenuItem::query()
+    #[Computed]
+    public function menuItems()
+    {
+        return MenuItem::query()
             ->when($this->searchTerm, fn($q) => $q->where('name', 'ilike', '%' . $this->searchTerm . '%'))
             ->when($this->selectedMenuCategory !== 'All', fn($q) => $q->where('category', $this->selectedMenuCategory))
             ->get();
+    }
 
-        $menuCategories = ['All', ...MenuItem::distinct()->pluck('category')->toArray()];
+    #[Computed]
+    public function menuCategories()
+    {
+        return ['All', ...MenuItem::distinct()->pluck('category')->toArray()];
+    }
 
+    #[Computed]
+    public function counts()
+    {
+        $sessions = $this->sessions;
+        
         $counts = [
             'all' => $sessions->count(),
-            'pending' => $sessions->filter(fn($s) => $s->orders->flatMap(fn($o) => $o->orderItems)->contains(fn($i) => in_array($i->status->value, [OrderStatus::PENDING->value, OrderStatus::SENT->value])))->count(),
-            'preparing' => $sessions->filter(fn($s) => $s->orders->flatMap(fn($o) => $o->orderItems)->contains('status', OrderStatus::PREPARING))->count(),
-            'ready' => $sessions->filter(fn($s) => $s->orders->flatMap(fn($o) => $o->orderItems)->contains('status', OrderStatus::READY))->count(),
-            'served' => $sessions->filter(fn($s) => $s->orders->flatMap(fn($o) => $o->orderItems)->contains('status', OrderStatus::SERVED))->count(),
+            'pending' => 0,
+            'preparing' => 0,
+            'ready' => 0,
+            'served' => 0,
         ];
 
+        foreach ($sessions as $session) {
+            $hasPending = false;
+            $hasPreparing = false;
+            $hasReady = false;
+            $hasServed = false;
+            
+            foreach ($session->orders as $order) {
+                foreach ($order->orderItems as $item) {
+                    $val = is_object($item->status) ? $item->status->value : $item->status;
+                    if ($val === OrderStatus::PENDING->value || $val === 'sent') $hasPending = true;
+                    elseif ($val === OrderStatus::PREPARING->value) $hasPreparing = true;
+                    elseif ($val === OrderStatus::READY->value) $hasReady = true;
+                    elseif ($val === OrderStatus::SERVED->value) $hasServed = true;
+                }
+            }
+            
+            if ($hasPending) $counts['pending']++;
+            if ($hasPreparing) $counts['preparing']++;
+            if ($hasReady) $counts['ready']++;
+            if ($hasServed) $counts['served']++;
+        }
 
-        return view('livewire.kitchen.dashboard', [
-            'sessions' => $sessions,
-            'menuItems' => $menuItems,
-            'menuCategories' => $menuCategories,
-            'counts' => $counts
-        ]);
+        return $counts;
+    }
+
+    #[Layout('layouts.kitchen')]
+    public function render()
+    {
+        return view('livewire.kitchen.dashboard');
     }
 
     #[On('theme-persisted')]

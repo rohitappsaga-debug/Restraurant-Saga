@@ -42,17 +42,21 @@
                     @error('email') <span class="text-xs text-rose-500 font-bold ml-1">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2" x-data="{ showPassword: false }">
                     <label class="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Passcode</label>
                     <div class="relative group">
                         <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-zinc-500 group-focus-within:text-emerald-500 transition-colors"></i>
                         <input
-                            type="password"
+                            x-bind:type="showPassword ? 'text' : 'password'"
                             wire:model="password"
                             placeholder="••••••••"
-                            class="w-full pl-12 pr-4 h-14 bg-black/40 border border-zinc-700 rounded-2xl text-zinc-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium"
+                            class="w-full pl-12 pr-12 h-14 bg-black/40 border border-zinc-700 rounded-2xl text-zinc-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium"
                             required
                         />
+                        <button type="button" @click="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-emerald-500 transition-colors focus:outline-none">
+                            <i x-show="!showPassword" data-lucide="eye" class="size-5"></i>
+                            <i x-show="showPassword" data-lucide="eye-off" class="size-5" style="display: none;"></i>
+                        </button>
                     </div>
                 </div>
 

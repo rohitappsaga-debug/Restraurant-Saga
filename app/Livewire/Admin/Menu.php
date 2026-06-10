@@ -135,6 +135,7 @@ class Menu extends Component
                 \Storage::disk('public')->delete($this->currentImage);
             }
             $imagePath = $this->image->store('dishes', 'public');
+            \App\Jobs\ProcessImageOptimization::dispatch($imagePath);
         }
 
         $categoryName = Category::find($this->categoryId)?->name ?? 'Uncategorized';
@@ -162,6 +163,8 @@ class Menu extends Component
             $item = MenuItem::create($data);
             $this->dispatch('notify', ['message' => 'Item created successfully', 'type' => 'success']);
         }
+
+        \Illuminate\Support\Facades\Cache::forget('admin.menu.stats');
 
         if ($this->generateOnSave && isset($item)) {
             $this->generateAIImage($item->id);
@@ -221,6 +224,7 @@ class Menu extends Component
         }
 
         $item->delete();
+        \Illuminate\Support\Facades\Cache::forget('admin.menu.stats');
         $this->resetPage();
         $this->dispatch('notify', ['message' => 'Item deleted successfully', 'type' => 'success']);
     }
@@ -279,21 +283,29 @@ class Menu extends Component
     #[Computed]
     public function stats()
     {
-        return [
-            'total' => MenuItem::count(),
-            'available' => MenuItem::where('available', true)->count(),
-            'unavailable' => MenuItem::where('available', false)->count(),
-            'categories' => Category::count(),
-        ];
+        return \Illuminate\Support\Facades\Cache::remember('admin.menu.stats', 60, function() {
+            return [
+                'total' => MenuItem::count(),
+                'available' => MenuItem::where('available', true)->count(),
+                'unavailable' => MenuItem::where('available', false)->count(),
+                'categories' => Category::count(),
+            ];
+        });
     }
 
     public function render()
     {
+        $categories = Category::all();
+
+        $settings = \Illuminate\Support\Facades\Cache::rememberForever('settings', function() {
+            return \App\Models\Setting::first()?->toArray() ?? ['currency' => '₹'];
+        });
+
         return view('livewire.admin.menu', [
             'items' => $this->menuItems,
-            'categories' => Category::all(),
+            'categories' => $categories,
             'stats' => $this->stats,
-            'settings' => \App\Models\Setting::first()?->toArray() ?? ['currency' => '₹']
+            'settings' => $settings
         ])->layout('layouts.admin');
     }
 }
