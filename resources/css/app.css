@@ -1,0 +1,132 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    /* Fonts */
+    --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "Courier Prime", ui-monospace, monospace;
+
+    /* Color Tokens (Light Mode - Standard) */
+    --color-background: hsl(240 9% 97%);
+    --color-foreground: hsl(220 14% 8%);
+
+    --color-card: hsl(0 0% 100%);
+    --color-card-foreground: hsl(220 14% 8%);
+
+    --color-popover: hsl(0 0% 100%);
+    --color-popover-foreground: hsl(220 14% 8%);
+
+    --color-primary: hsl(220 85% 50%);
+    --color-primary-foreground: hsl(0 0% 100%);
+
+    --color-secondary: hsl(240 10% 96%);
+    --color-secondary-foreground: hsl(220 14% 8%);
+
+    --color-muted: hsl(240 10% 95%);
+    --color-muted-foreground: hsl(214 13% 40%);
+
+    --color-accent: hsl(220 85% 96%);
+    --color-accent-foreground: hsl(220 85% 50%);
+
+    --color-destructive: hsl(0 84.2% 60.2%);
+    --color-destructive-foreground: hsl(0 0% 98%);
+
+    --color-success: hsl(145 63% 49%);
+    --color-success-foreground: hsl(0 0% 100%);
+
+    --color-warning: hsl(48 89% 50%);
+    --color-warning-foreground: hsl(0 0% 100%);
+
+    --color-border: hsl(214 13% 88%);
+    --color-input: hsl(214 13% 88%);
+    --color-ring: hsl(220 85% 50%);
+
+    --radius: 0.75rem;
+
+    /* Custom Shadows - Modern & Subtle */
+    --shadow-glow: 0 0 20px -5px var(--color-glow-base);
+    --shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+    /* Premium Dark Palette (#0f172a background) */
+    --color-background: hsl(222.2 47.4% 11.2%);
+    --color-foreground: hsl(210 40% 98%);
+
+    --color-card: hsl(222.2 47.4% 15%); /* Elevated surface */
+    --color-card-foreground: hsl(210 40% 98%);
+
+    --color-popover: hsl(222.2 47.4% 15%);
+    --color-popover-foreground: hsl(210 40% 98%);
+
+    --color-primary: hsl(212 91% 60%);
+    --color-primary-foreground: hsl(222 47% 11%);
+
+    --color-secondary: hsl(222 47% 20%);
+    --color-secondary-foreground: hsl(210 40% 98%);
+
+    --color-muted: hsl(222 47% 25%);
+    --color-muted-foreground: hsl(215 20% 65%);
+
+    --color-accent: hsl(222 47% 30%);
+    --color-accent-foreground: hsl(210 40% 98%);
+
+    --color-destructive: hsl(0 63% 31%);
+    --color-destructive-foreground: hsl(210 40% 98%);
+
+    --color-border: hsl(222 47% 25%);
+    --color-input: hsl(222 47% 25%);
+    --color-ring: hsl(212 91% 60%);
+
+    --color-glow-base: rgba(59, 130, 246, 0.3);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    html, body {
+        @apply antialiased transition-colors duration-300;
+    }
+
+    body {
+        @apply bg-background text-foreground font-display min-h-screen antialiased;
+    }
+
+    button, 
+    [role="button"], 
+    a {
+        cursor: pointer;
+    }
+
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+    }
+}
+
+@layer utilities {
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
