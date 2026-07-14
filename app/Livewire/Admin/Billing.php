@@ -33,31 +33,25 @@ class Billing extends Component
         $this->resetPage();
     }
 
-    public function markAsPaid($orderId, $method = 'cash')
+    public function markAsPaid($orderId, $method = 'cash', \App\Services\OrderService $orderService = null)
     {
-        $order = Order::findOrFail($orderId);
-        
-        // Calculate the final total before saving if not already set or for accuracy
-        $details = $this->calculateBillDetails($order);
-        
-        // Update the current order
-        $order->update([
-            'is_paid' => true,
-            'payment_method' => $method,
-            'status' => OrderStatus::SERVED,
-            'total' => $details['total']
-        ]);
+        $orderService ??= new \App\Services\OrderService();
 
-        // If this order belongs to a session, update all other orders in that session too
-        if ($order->session_id) {
-            Order::where('session_id', $order->session_id)
-                ->where('is_paid', false)
-                ->update([
-                    'is_paid' => true,
-                    'payment_method' => $method,
-                    'status' => OrderStatus::SERVED
-                ]);
-        }
+        $details = null;
+        $order = null;
+
+        DB::transaction(function () use ($orderId, $method, $orderService, &$details, &$order) {
+            $order = Order::lockForUpdate()->findOrFail($orderId);
+
+            $details = $this->calculateBillDetails($order);
+            $alreadyPaid = (float) $order->paymentTransactions()->where('status', 'completed')->sum('amount');
+            $remaining = max(0, round($details['total'] - $alreadyPaid, 2));
+
+            $order->update(['total' => $details['total']]);
+
+            // Single payment path: records the transaction and frees the order's tables
+            $orderService->settleOrder($order, $method, $remaining);
+        });
 
         // Broadcast payment for real-time notifications
         event(new \App\Events\PaymentReceived($order, $details['total'], $method));
@@ -67,17 +61,26 @@ class Billing extends Component
 
     public function clearAllPending()
     {
-        $count = Order::where('is_paid', false)
-            ->where('status', '!=', OrderStatus::CANCELLED)
-            ->count();
+        $count = 0;
 
-        Order::where('is_paid', false)
-            ->where('status', '!=', OrderStatus::CANCELLED)
-            ->update([
+        DB::transaction(function () use (&$count) {
+            $orderIds = Order::where('is_paid', false)
+                ->where('status', '!=', OrderStatus::CANCELLED)
+                ->pluck('id');
+
+            $count = $orderIds->count();
+
+            Order::whereIn('id', $orderIds)->update([
                 'is_paid' => true,
-                'payment_method' => 'CASH',
+                'payment_method' => \App\Enums\PaymentMethod::CASH,
                 'status' => OrderStatus::SERVED
             ]);
+
+            \App\Models\Table::whereIn('current_order_id', $orderIds)->update([
+                'status' => \App\Enums\TableStatus::CLEANING,
+                'current_order_id' => null,
+            ]);
+        });
 
         $this->dispatch('notify', ['message' => "Successfully cleared {$count} pending bills", 'type' => 'success']);
     }
@@ -149,9 +152,6 @@ class Billing extends Component
         return Order::query()
             ->where('is_paid', false)
             ->where('status', '!=', OrderStatus::CANCELLED)
-            ->whereHas('session', function($query) {
-                $query->where('status', 'active');
-            })
             ->when($this->search, function($q) {
                 $q->where('table_number', 'like', '%' . $this->search . '%');
             })
@@ -166,12 +166,8 @@ class Billing extends Component
             ->where('is_paid', true)
             ->sum('total');
 
-        // Only count pending orders that have an active session (to match visible list)
         $pendingCount = Order::where('is_paid', false)
             ->where('status', '!=', OrderStatus::CANCELLED)
-            ->whereHas('session', function($query) {
-                $query->where('status', 'active');
-            })
             ->count();
 
         return [

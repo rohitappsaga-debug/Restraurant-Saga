@@ -50,12 +50,12 @@ class Dashboard extends Component
     }
     
     // Order State
-    public $selectedTableId = null;
-    public $selectedSessionId = null;
+    public array $selectedTableIds = [];
     #[Url]
     public $selectedCategoryId = null;
     #[Url]
     public $menuSearch = '';
+    #[Url]
     public $currentOrderId = null;
     
     // Cart: [uuid => ['item_id' => ..., 'name' => ..., 'price' => ..., 'quantity' => ..., 'modifiers' => [...], 'notes' => '']]
@@ -84,8 +84,8 @@ class Dashboard extends Component
     {
         return Table::orderBy('number')
             ->when($this->search && $this->view === 'home', fn($q) => $q->where('number', 'like', '%' . $this->search . '%'))
-            ->withExists(['activeSession as has_ready_items' => function($query) {
-                $query->whereHas('orders.orderItems', function($q) {
+            ->withExists(['currentOrder as has_ready_items' => function($query) {
+                $query->whereHas('orderItems', function($q) {
                     $q->where('status', \App\Enums\OrderStatus::READY);
                 });
             }])
@@ -108,9 +108,14 @@ class Dashboard extends Component
     }
 
     #[Computed]
-    public function selectedTable()
+    public function selectedTablesLabel()
     {
-        return $this->selectedTableId ? Table::find($this->selectedTableId) : null;
+        if ($this->currentOrder) {
+            return $this->currentOrder->table_label;
+        }
+
+        return Table::whereIn('id', $this->selectedTableIds)
+            ->pluck('number')->sort()->values()->implode('+');
     }
 
     #[Computed]
@@ -130,22 +135,18 @@ class Dashboard extends Component
     #[Computed]
     public function currentOrder()
     {
-        return $this->currentOrderId ? Order::with(['orderItems.menuItem', 'table'])->find($this->currentOrderId) : null;
-    }
-
-    #[Computed]
-    public function selectedSession()
-    {
-        return $this->selectedSessionId ? \App\Models\TableSession::with(['orders.orderItems.menuItem', 'orders.orderItems.kot'])->find($this->selectedSessionId) : null;
+        return $this->currentOrderId
+            ? Order::with(['orderItems.menuItem', 'orderItems.kot', 'tables', 'creator', 'paymentTransactions'])->find($this->currentOrderId)
+            : null;
     }
 
     #[Computed]
     public function canServeAnyReady()
     {
-        $session = $this->selectedSession;
-        if (!$session) return false;
-        
-        return $session->orders->flatMap->orderItems->contains(function($item) {
+        $order = $this->currentOrder;
+        if (!$order) return false;
+
+        return $order->orderItems->contains(function($item) {
             return $item->status === OrderStatus::READY;
         });
     }
@@ -167,10 +168,10 @@ class Dashboard extends Component
     #[Computed]
     public function canCheckout()
     {
-        $session = $this->selectedSession;
-        if (!$session) return false;
-        
-        return $session->orders->flatMap->orderItems->every(function($item) {
+        $order = $this->currentOrder;
+        if (!$order) return false;
+
+        return $order->orderItems->every(function($item) {
             return in_array($item->status, [OrderStatus::SERVED, OrderStatus::CANCELLED]);
         });
     }
@@ -178,10 +179,10 @@ class Dashboard extends Component
     #[Computed]
     public function pendingItemsCount()
     {
-        $session = $this->selectedSession;
-        if (!$session) return 0;
+        $order = $this->currentOrder;
+        if (!$order) return 0;
 
-        return $session->orders->flatMap->orderItems->filter(function($item) {
+        return $order->orderItems->filter(function($item) {
             return !in_array($item->status, [OrderStatus::SERVED, OrderStatus::CANCELLED]);
         })->count();
     }
@@ -232,30 +233,27 @@ class Dashboard extends Component
 
         // Context-aware totals
         if (in_array($this->view, ['bill'])) {
-            // Full session totals from DB
-            if ($this->selectedSessionId) {
-                $session = \App\Models\TableSession::find($this->selectedSessionId);
-                if ($session) {
-                    $settings = \App\Models\Setting::first();
-                    $this->taxEnabled = $settings?->tax_enabled ?? true;
-                    $this->taxPercent = (float)($settings?->tax_rate ?? 5);
+            // Full order totals from DB
+            if ($this->currentOrder) {
+                $settings = \App\Models\Setting::first();
+                $this->taxEnabled = $settings?->tax_enabled ?? true;
+                $this->taxPercent = (float)($settings?->tax_rate ?? 5);
 
-                    $totals = $billingService->calculateSessionTotals($session);
+                $totals = $billingService->calculateOrderTotals($this->currentOrder);
 
-                    // Add dynamic discount from UI if session is active
-                    $discountVal = is_numeric($this->discountValue) ? (float) $this->discountValue : 0;
-                    if ($discountVal > 0) {
-                        $actualDiscount = $this->discountType === 'percentage' 
-                            ? ($totals['subtotal'] * ($discountVal / 100))
-                            : $discountVal;
-                        
-                        $totals['discountTotal'] += round($actualDiscount, 2);
-                        // Recalculate taxable amount and tax based on settings
-                        $taxableAmount = round(($totals['subtotal'] + $totals['serviceCharge']) - $totals['discountTotal'], 2);
-                        $totals['taxTotal'] = $this->taxEnabled ? round(max(0, $taxableAmount * ($this->taxPercent / 100)), 2) : 0;
-                        $totals['grandTotal'] = round($taxableAmount + $totals['taxTotal'], 2);
-                        $totals['remainingDue'] = round($totals['grandTotal'] - $totals['alreadyPaid'], 2);
-                    }
+                // Add dynamic discount from UI on top of what's stored on the order
+                $discountVal = is_numeric($this->discountValue) ? (float) $this->discountValue : 0;
+                if ($discountVal > 0) {
+                    $actualDiscount = $this->discountType === 'percentage'
+                        ? ($totals['subtotal'] * ($discountVal / 100))
+                        : $discountVal;
+
+                    $totals['discountTotal'] += round($actualDiscount, 2);
+                    // Recalculate taxable amount and tax based on settings
+                    $taxableAmount = round(($totals['subtotal'] + $totals['serviceCharge']) - $totals['discountTotal'], 2);
+                    $totals['taxTotal'] = $this->taxEnabled ? round(max(0, $taxableAmount * ($this->taxPercent / 100)), 2) : 0;
+                    $totals['grandTotal'] = round($taxableAmount + $totals['taxTotal'], 2);
+                    $totals['remainingDue'] = round($totals['grandTotal'] - $totals['alreadyPaid'], 2);
                 }
             }
         } else {
@@ -320,7 +318,8 @@ class Dashboard extends Component
     {
         if ($view === 'home') {
             $this->cart = [];
-            $this->selectedTableId = null;
+            $this->selectedTableIds = [];
+            $this->currentOrderId = null;
         }
 
         $this->view = $view;
@@ -357,27 +356,50 @@ class Dashboard extends Component
         $this->dispatch('notify', ['type' => 'info', 'message' => "Notifications {$status}"]);
     }
 
-    public function selectTable($tableId, \App\Services\OrderService $orderService)
+    public function toggleTableSelection($tableId, \App\Services\OrderService $orderService)
     {
-        $this->selectedTableId = $tableId;
         $table = Table::find($tableId);
-        
+
         if (!$table) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Table not found']);
             return;
         }
 
-        if ($table->status === TableStatus::OCCUPIED && $table->current_session_id) {
-            $this->selectedSessionId = $table->current_session_id;
+        // Tapping a table with an open order jumps straight to that order's bill
+        $openOrder = $orderService->openOrderForTable($table);
+        if ($openOrder) {
+            $this->currentOrderId = $openOrder->id;
+            $this->selectedTableIds = [];
             $this->view = 'bill';
-        } else {
-            // New "Conceptual" Session - don't persist to DB yet
-            $this->selectedSessionId = null;
-            $this->view = 'menu';
-            $this->cart = [];
-            $this->discountValue = 0;
+            $this->dispatch('view-changed');
+            return;
         }
-        
+
+        if (in_array($table->status, [TableStatus::CLEANING, TableStatus::OUT_OF_SERVICE], true)) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => "Table {$table->number} is not available right now."]);
+            return;
+        }
+
+        // Free / reserved / admin-checked-in table: toggle multi-selection
+        if (in_array($tableId, $this->selectedTableIds)) {
+            $this->selectedTableIds = array_values(array_diff($this->selectedTableIds, [$tableId]));
+        } else {
+            $this->selectedTableIds[] = $tableId;
+        }
+    }
+
+    public function startOrder()
+    {
+        if (empty($this->selectedTableIds)) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Select at least one table first.']);
+            return;
+        }
+
+        // Order is created lazily on the first kitchen submit
+        $this->currentOrderId = null;
+        $this->cart = [];
+        $this->discountValue = 0;
+        $this->view = 'menu';
         $this->dispatch('view-changed');
     }
 
@@ -468,17 +490,15 @@ class Dashboard extends Component
 
         try {
             DB::transaction(function () use ($orderService, $kotService) {
-                // 1. Ensure session exists (Just-in-time creation)
-                if (!$this->selectedSessionId) {
-                    if (!$this->selectedTableId) throw new \Exception("No table selected");
-                    $session = $orderService->startSession($this->selectedTableId, Auth::id());
-                    $this->selectedSessionId = $session->id;
+                // 1. Ensure the order exists (created lazily on the first round)
+                if (!$this->currentOrderId) {
+                    if (empty($this->selectedTableIds)) throw new \Exception("No table selected");
+                    $order = $orderService->createOrder($this->selectedTableIds, Auth::id());
+                    $this->currentOrderId = $order->id;
+                    $this->selectedTableIds = [];
+                } else {
+                    $order = Order::lockForUpdate()->findOrFail($this->currentOrderId);
                 }
-
-                $session = \App\Models\TableSession::findOrFail($this->selectedSessionId);
-                
-                // 2. Ensure active order exists for this session
-                $order = $orderService->getActiveOrder($session);
 
                 // 2. Create Order Items as PENDING
                 foreach ($this->cart as $data) {
@@ -570,19 +590,17 @@ class Dashboard extends Component
 
     public function markAllAsServed(\App\Services\OrderService $orderService)
     {
-        if (!$this->selectedSessionId) return;
-        
+        if (!$this->currentOrderId) return;
+
         try {
             DB::transaction(function () use ($orderService) {
-                $session = \App\Models\TableSession::find($this->selectedSessionId);
-                if (!$session) return;
+                $order = Order::find($this->currentOrderId);
+                if (!$order) return;
 
-                $orderIds = $session->orders()->pluck('id');
-                
-                OrderItem::whereIn('order_id', $orderIds)
+                OrderItem::where('order_id', $order->id)
                     ->whereIn('status', [
-                        OrderStatus::READY, 
-                        OrderStatus::SENT, 
+                        OrderStatus::READY,
+                        OrderStatus::SENT,
                         OrderStatus::PREPARING
                     ])
                     ->update([
@@ -591,10 +609,7 @@ class Dashboard extends Component
                         'served_by' => Auth::id()
                     ]);
 
-                // Sync all affected orders
-                foreach ($session->orders as $order) {
-                    $orderService->syncOrderStatus($order);
-                }
+                $orderService->syncOrderStatus($order);
             });
 
             $this->dispatch('notify', ['type' => 'success', 'message' => 'All ready items marked as served']);
@@ -611,71 +626,58 @@ class Dashboard extends Component
 
     public function markAsPaid($method = null)
     {
-        if (!$this->selectedSessionId) return;
+        if (!$this->currentOrderId) return;
         if ($method) $this->paymentMethod = $method;
 
         try {
-            DB::beginTransaction();
-            $session = \App\Models\TableSession::lockForUpdate()->find($this->selectedSessionId);
-            if (!$session) throw new \Exception("Session not found");
-
             $billingService = new \App\Services\BillingService();
-            $totals = $billingService->calculateSessionTotals($session);
-            
             $orderService = new \App\Services\OrderService();
-            $order = $orderService->getActiveOrder($session);
+            $paidAmount = 0;
+            $order = null;
 
-            // Persist the UI-selected discount to the order record
-            $finalDiscountValue = 0;
-            $discountInput = is_numeric($this->discountValue) ? (float) $this->discountValue : 0;
-            
-            if ($discountInput > 0) {
-                $finalDiscountValue = ($this->discountType === 'percentage')
-                    ? ($totals['subtotal'] * ($discountInput / 100))
-                    : $discountInput;
-            }
+            DB::transaction(function () use ($billingService, $orderService, &$paidAmount, &$order) {
+                $order = Order::lockForUpdate()->findOrFail($this->currentOrderId);
 
-            // Record Payment Transaction for the remaining balance
-            if (isset($totals['remainingDue']) && $totals['remainingDue'] > 0) {
-                $order->paymentTransactions()->create([
-                    'id' => (string) Str::uuid(),
-                    'amount' => $totals['remainingDue'],
-                    'method' => $this->paymentMethod,
-                    'status' => 'completed'
-                ]);
-            }
+                // Persist the UI-selected discount BEFORE computing the amount due
+                $discountInput = is_numeric($this->discountValue) ? (float) $this->discountValue : 0;
+                if ($discountInput > 0) {
+                    $totals = $billingService->calculateOrderTotals($order);
+                    $finalDiscountValue = ($this->discountType === 'percentage')
+                        ? ($totals['subtotal'] * ($discountInput / 100))
+                        : $discountInput;
 
-            // Finalize ALL Orders in the Session
-            $session->orders()->update([
-                'payment_method' => $this->paymentMethod ?? 'cash',
-                'is_paid' => true,
-                'status' => OrderStatus::DELIVERED
-            ]);
+                    $order->update([
+                        'discount_type' => $this->discountType,
+                        'discount_value' => round($finalDiscountValue, 2),
+                    ]);
+                    $order->unsetRelation('orderItems');
+                }
 
-            // Update the specific active order with the UI-specific discount/totals for record keeping
-            $order->update([
-                'discount_type' => $this->discountType,
-                'discount_value' => $finalDiscountValue,
-                'total' => $totals['grandTotal'] ?? $order->total,
-            ]);
+                $totals = $billingService->calculateOrderTotals($order->fresh(['orderItems.menuItem', 'paymentTransactions']));
+                $paidAmount = $totals['remainingDue'];
 
-            DB::commit();
+                $orderService->settleOrder($order, $this->paymentMethod ?? 'cash', $paidAmount);
+
+                $order->update(['total' => $totals['grandTotal']]);
+            });
+
             $this->showPaymentModal = false;
-            
+            $this->discountValue = 0;
+            unset($this->currentOrder);
+
             // Broadcast payment for Admin notifications
-            event(new \App\Events\PaymentReceived($order, $totals['remainingDue'] ?? 0, $this->paymentMethod));
-            
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Payment recorded via ' . strtoupper($this->paymentMethod)]);
+            event(new \App\Events\PaymentReceived($order, $paidAmount, $this->paymentMethod));
+
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Payment recorded via ' . strtoupper($this->paymentMethod) . '. Tables released for cleaning.']);
         } catch (\Exception $e) {
-            DB::rollBack();
             \Illuminate\Support\Facades\Log::error("Payment process failed: " . $e->getMessage());
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Payment failed: ' . $e->getMessage()]);
         }
     }
 
-    public function freeTable()
+    public function freeTables(\App\Services\OrderService $orderService)
     {
-        if (!$this->selectedTableId || !$this->selectedSessionId) return;
+        if (!$this->currentOrderId) return;
 
         if (!$this->canCheckout) {
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Cannot checkout: Some items are still being prepared or are ready for pickup.']);
@@ -683,32 +685,25 @@ class Dashboard extends Component
         }
 
         try {
-            DB::transaction(function () {
-                $session = \App\Models\TableSession::lockForUpdate()->find($this->selectedSessionId);
-                if (!$session) throw new \Exception("Session not found");
+            DB::transaction(function () use ($orderService) {
+                $order = Order::lockForUpdate()->findOrFail($this->currentOrderId);
 
-                $session->update([
-                    'status' => 'closed',
-                    'ended_at' => now()
-                ]);
+                if (!$order->is_paid) {
+                    // Auto-settle without a recorded transaction (walked-out / comped)
+                    $order->update([
+                        'is_paid' => true,
+                        'payment_method' => 'cash',
+                        'status' => OrderStatus::DELIVERED,
+                    ]);
+                }
 
-                // Auto-settle any unpaid orders in this session
-                $session->orders()->where('is_paid', false)->update([
-                    'is_paid' => true,
-                    'payment_method' => 'CASH', // Default to cash if auto-settled
-                    'status' => OrderStatus::DELIVERED
-                ]);
-
-                Table::where('id', $this->selectedTableId)->update([
-                    'status' => TableStatus::CLEANING,
-                    'current_session_id' => null
-                ]);
+                $orderService->releaseTables($order);
             });
 
             $this->view = 'home';
-            $this->selectedTableId = null;
-            $this->selectedSessionId = null;
-            $this->dispatch('notify', ['type' => 'success', 'message' => 'Table is now in cleaning state.']);
+            $this->currentOrderId = null;
+            $this->selectedTableIds = [];
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Tables are now in cleaning state.']);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Table free failure: " . $e->getMessage());
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Checkout failed: ' . $e->getMessage()]);
@@ -723,12 +718,12 @@ class Dashboard extends Component
 
     public function printBill()
     {
-        if (!$this->selectedSessionId) {
-            $this->dispatch('notify', ['type' => 'error', 'message' => 'No session to print']);
+        if (!$this->currentOrderId) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'No order to print']);
             return;
         }
 
-        $this->dispatch('trigger-print-bill');
-        $this->dispatch('notify', ['type' => 'success', 'message' => 'Printing bill...']);
+        // Open the on-screen preview; actual printing / save-as-PDF happens from there
+        $this->dispatch('show-receipt-preview');
     }
 }

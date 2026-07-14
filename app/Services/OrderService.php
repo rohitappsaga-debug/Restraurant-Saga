@@ -4,56 +4,108 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Table;
-use App\Models\TableSession;
 use App\Enums\TableStatus;
 use App\Enums\OrderStatus;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class OrderService
 {
     /**
-     * Start a new guest session for a table.
+     * Create an order spanning one or more tables. Locks the table rows
+     * (sorted, to avoid deadlocks) and rejects tables that already belong
+     * to an open order or are out of commission.
      */
-    public function startSession(string $tableId, string $waiterId): TableSession
+    public function createOrder(array $tableIds, string $waiterId): Order
     {
-        return DB::transaction(function () use ($tableId, $waiterId) {
-            $table = Table::findOrFail($tableId);
+        return DB::transaction(function () use ($tableIds, $waiterId) {
+            $tables = Table::whereIn('id', $tableIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
 
-            if ($table->status !== TableStatus::FREE) {
-                // In production, we'd check for same-waiter or manager override
+            if ($tables->count() !== count(array_unique($tableIds))) {
+                throw new \DomainException('One or more selected tables no longer exist.');
             }
 
-            $session = TableSession::create([
-                'table_id' => $tableId,
-                'waiter_id' => $waiterId,
-                'status' => 'active',
-                'started_at' => now(),
+            foreach ($tables as $table) {
+                if ($table->current_order_id) {
+                    throw new \DomainException("Table {$table->number} already has an open order.");
+                }
+                if (in_array($table->status, [TableStatus::CLEANING, TableStatus::OUT_OF_SERVICE], true)) {
+                    throw new \DomainException("Table {$table->number} is not available right now.");
+                }
+            }
+
+            $order = Order::create([
+                'table_number' => $tables->min('number'),
+                'status' => OrderStatus::PENDING,
+                'created_by' => $waiterId,
+                'total' => 0,
             ]);
 
-            $table->update([
+            $order->tables()->attach($tables->pluck('id')->all());
+
+            Table::whereIn('id', $tables->pluck('id'))->update([
                 'status' => TableStatus::OCCUPIED,
-                'current_session_id' => $session->id,
+                'current_order_id' => $order->id,
             ]);
 
-            return $session;
+            return $order;
         });
     }
 
     /**
-     * Create or retrieve the active order for a session.
+     * Resolve the open order a table belongs to, self-healing stale pointers.
      */
-    public function getActiveOrder(TableSession $session): Order
+    public function openOrderForTable(Table $table): ?Order
     {
-        return Order::firstOrCreate(
-            ['session_id' => $session->id, 'status' => OrderStatus::PENDING, 'is_paid' => false],
-            [
-                'id' => Str::uuid(),
-                'table_number' => $session->table->number,
-                'created_by' => $session->waiter_id,
-                'total' => 0,
-            ]
-        );
+        if (!$table->current_order_id) {
+            return null;
+        }
+
+        $order = $table->currentOrder;
+
+        if ($order && !$order->is_paid && $order->status !== OrderStatus::CANCELLED) {
+            return $order;
+        }
+
+        $table->update(['current_order_id' => null]);
+
+        return null;
+    }
+
+    /**
+     * Single payment path for waiter and admin: record the transaction,
+     * mark the order settled, and free its tables.
+     */
+    public function settleOrder(Order $order, string $method, float $amountDue): void
+    {
+        if ($amountDue > 0) {
+            $order->paymentTransactions()->create([
+                'amount' => $amountDue,
+                'method' => $method,
+                'status' => 'completed',
+            ]);
+        }
+
+        $order->update([
+            'is_paid' => true,
+            'payment_method' => $method,
+            'status' => OrderStatus::DELIVERED,
+        ]);
+
+        $this->releaseTables($order);
+    }
+
+    /**
+     * Free every table attached to this order. Pivot rows stay as history.
+     */
+    public function releaseTables(Order $order): void
+    {
+        Table::where('current_order_id', $order->id)->update([
+            'status' => TableStatus::CLEANING,
+            'current_order_id' => null,
+        ]);
     }
 
     /**

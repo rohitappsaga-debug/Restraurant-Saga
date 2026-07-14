@@ -13,7 +13,7 @@ class Table extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'number', 'capacity', 'status', 'current_session_id', 'current_order_id', 'reserved_by', 
+        'number', 'capacity', 'status', 'current_order_id', 'reserved_by', 
         'reserved_time', 'group_id', 'is_primary'
     ];
 
@@ -27,8 +27,7 @@ class Table extends Model
     }
 
     public function orders() { return $this->hasMany(Order::class, 'table_number', 'number'); }
-    public function sessions() { return $this->hasMany(TableSession::class); }
-    public function activeSession() { return $this->belongsTo(TableSession::class, 'current_session_id'); }
     public function reservations() { return $this->hasMany(Reservation::class, 'table_number', 'number'); }
     public function currentOrder() { return $this->belongsTo(Order::class, 'current_order_id'); }
+    public function allOrders() { return $this->belongsToMany(Order::class, 'order_table')->withTimestamps(); }
 }

@@ -14,7 +14,7 @@ class Order extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'session_id', 'table_number', 'status', 'created_by', 'total', 'type',
+        'table_number', 'status', 'created_by', 'total', 'type',
         'discount_type', 'discount_value', 'is_paid', 
         'payment_method', 'service_charge', 'cancel_reason', 'hold_status', 'parent_order_id'
     ];
@@ -32,7 +32,20 @@ class Order extends Model
     }
 
     public function orderItems() { return $this->hasMany(OrderItem::class, 'order_id'); }
-    public function session() { return $this->belongsTo(TableSession::class, 'session_id'); }
+    public function tables() { return $this->belongsToMany(Table::class, 'order_table')->withTimestamps(); }
+
+    // "5+6" style label spanning all attached tables; table_number only holds the primary table
+    public function getTableLabelAttribute(): string
+    {
+        $numbers = $this->tables->pluck('number')->sort()->values();
+
+        return $numbers->isNotEmpty() ? $numbers->implode('+') : (string) $this->table_number;
+    }
+
+    public function scopeOpen($query)
+    {
+        return $query->where('is_paid', false)->where('status', '!=', OrderStatus::CANCELLED);
+    }
     public function kots() { return $this->hasMany(Kot::class, 'order_id'); }
     public function creator() { return $this->belongsTo(User::class, 'created_by'); }
     public function table() { return $this->belongsTo(Table::class, 'table_number', 'number'); }

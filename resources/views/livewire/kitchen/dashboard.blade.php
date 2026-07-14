@@ -99,9 +99,9 @@
         @if($view === 'orders')
             <div wire:poll.5s>
                 @php
-                $filteredSessions = $this->sessions->filter(function($session) use ($activeTab) {
+                $filteredOrders = $this->orders->filter(function($order) use ($activeTab) {
                     if ($activeTab === 'all') return true;
-                    return $session->orders->flatMap(fn($o) => $o->orderItems)->contains(function($item) use ($activeTab) {
+                    return $order->orderItems->contains(function($item) use ($activeTab) {
                         $status = $item->status instanceof \App\Enums\OrderStatus ? $item->status->value : (is_object($item->status) ? $item->status->value : $item->status);
                         if ($activeTab === 'pending') {
                             return in_array($status, ['pending', 'sent']);
@@ -111,7 +111,7 @@
                 });
             @endphp
 
-            @if($filteredSessions->isEmpty())
+            @if($filteredOrders->isEmpty())
                 <div class="flex flex-col items-center justify-center py-40 text-muted-foreground/30">
                     <div class="size-32 bg-muted/20 rounded-full flex items-center justify-center mb-6">
                         <i data-lucide="check-circle" class="size-16"></i>
@@ -121,11 +121,9 @@
                 </div>
             @else
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 items-start">
-                    @foreach($filteredSessions as $session)
+                    @foreach($filteredOrders as $order)
                         @php
-                            $allOrderItems = $session->orders->flatMap(fn($o) => $o->orderItems);
-                            
-                            $displayItems = $allOrderItems->filter(function($item) use ($activeTab) {
+                            $displayItems = $order->orderItems->filter(function($item) use ($activeTab) {
                                 $status = $item->status instanceof \App\Enums\OrderStatus ? $item->status->value : (is_object($item->status) ? $item->status->value : $item->status);
                                 
                                 if ($activeTab === 'all') return in_array($status, ['pending', 'sent', 'preparing', 'ready', 'served']);
@@ -133,8 +131,7 @@
                                 return $status === $activeTab;
                             });
                             
-                            $firstOrder = $session->orders->first();
-                            $minutesElapsed = $firstOrder ? $firstOrder->created_at->diffInMinutes(now()) : 0;
+                            $minutesElapsed = $order->created_at->diffInMinutes(now());
                             $isHeavyDelay = $minutesElapsed >= 25;
                             $isWarningDelay = $minutesElapsed >= 15;
                             
@@ -144,7 +141,7 @@
                         @endphp
 
                         <div 
-                            wire:key="session-{{ $session->id }}"
+                            wire:key="order-{{ $order->id }}"
                             class="flex flex-col rounded-2xl border backdrop-blur-sm transition-all duration-300 {{ $cardStatusClasses }} shadow-sm hover:shadow-md"
                         >
                             <!-- Header -->
@@ -155,7 +152,7 @@
                                             <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Table</span>
                                             <div class="size-1.5 rounded-full {{ $isHeavyDelay ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500' }}"></div>
                                         </div>
-                                        <h3 class="text-5xl font-black text-foreground tracking-tighter">{{ $session->table->number }}</h3>
+                                        <h3 class="text-5xl font-black text-foreground tracking-tighter">{{ $order->table_label }}</h3>
                                     </div>
 
                                     <div class="flex flex-col items-end gap-3">
@@ -167,9 +164,9 @@
                                         </div>
                                         
                                         <div class="flex items-center gap-2">
-                                            <span class="text-[10px] font-black text-zinc-500 uppercase tracking-widest font-mono">ID: {{ strtoupper(substr($session->id, -6)) }}</span>
+                                            <span class="text-[10px] font-black text-zinc-500 uppercase tracking-widest font-mono">#{{ $order->order_number }}</span>
                                             <button 
-                                                wire:click="forceCloseSession('{{ $session->id }}')"
+                                                wire:click="forceCloseOrder('{{ $order->id }}')"
                                                 wire:confirm="Are you sure you want to clear this table from the kitchen display? This is usually done by the waiter at checkout."
                                                 class="size-8 rounded-lg bg-secondary hover:bg-rose-500/10 text-zinc-500 hover:text-rose-500 transition-colors flex items-center justify-center border border-border"
                                                 title="Force Clear Table"

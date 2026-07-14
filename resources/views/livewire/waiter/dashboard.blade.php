@@ -13,9 +13,9 @@
                     <h1 class="text-2xl font-black tracking-tight leading-tight uppercase">
                         @if($view === 'profile') Profile @else
                             @if($view === 'home') Tables Overview @endif
-                            @if($view === 'menu') Table {{ $this->selectedTable?->number }} @endif
-                            @if($view === 'summary') Table {{ $this->selectedTable?->number }} @endif
-                            @if($view === 'bill') Table {{ $this->selectedTable?->number }} @endif
+                            @if($view === 'menu') Table {{ $this->selectedTablesLabel }} @endif
+                            @if($view === 'summary') Table {{ $this->selectedTablesLabel }} @endif
+                            @if($view === 'bill') Table {{ $this->selectedTablesLabel }} @endif
                             @if($view === 'alerts') Notifications @endif
                         @endif
                     </h1>
@@ -101,16 +101,17 @@
                         <div class="relative group">
                             <button 
                                 wire:key="table-{{ $table->id }}"
-                                wire:click="{{ $table->status->value === 'cleaning' ? '' : "selectTable('{$table->id}')" }}"
+                                wire:click="{{ $table->status->value === 'cleaning' ? '' : "toggleTableSelection('{$table->id}')" }}"
                                 wire:loading.attr="disabled"
-                                wire:target="selectTable('{{ $table->id }}')"
+                                wire:target="toggleTableSelection('{{ $table->id }}')"
                                 @class([
                                     'w-full flex flex-col justify-between p-6 rounded-3xl bg-card border transition-all text-left group relative disabled:opacity-50 shadow-sm hover:shadow-md',
-                                    'border-border/60 hover:border-indigo-500/50' => $table->status->value !== 'cleaning',
+                                    'border-border/60 hover:border-indigo-500/50' => $table->status->value !== 'cleaning' && !in_array($table->id, $selectedTableIds),
+                                    'border-indigo-600 ring-2 ring-indigo-500/40 shadow-indigo-500/10' => in_array($table->id, $selectedTableIds),
                                     'border-blue-500/30 bg-blue-50/5 dark:bg-blue-900/5' => $table->status->value === 'cleaning'
                                 ])
                             >
-                                <div wire:loading wire:target="selectTable('{{ $table->id }}')" class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[2px] z-10 rounded-3xl">
+                                <div wire:loading wire:target="toggleTableSelection('{{ $table->id }}')" class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[2px] z-10 rounded-3xl">
                                     <div class="size-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
                                 <div class="flex items-start justify-between">
@@ -128,7 +129,12 @@
                                         <i data-lucide="users" class="size-4"></i>
                                         <span class="text-xs font-bold">{{ $table->capacity }}</span>
                                     </div>
-                                    @if($table->status->value === 'occupied')
+                                    @if(in_array($table->id, $selectedTableIds))
+                                        <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-600 text-white">
+                                            <i data-lucide="check" class="size-3"></i>
+                                            <span class="text-[9px] font-black uppercase tracking-widest">Selected</span>
+                                        </div>
+                                    @elseif($table->status->value === 'occupied')
                                         <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-500">
                                             <span class="relative flex h-1.5 w-1.5">
                                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -161,6 +167,22 @@
                         </div>
                     @endforeach
                 </div>
+
+                <!-- Start Order CTA (multi-table selection) -->
+                @if(count($selectedTableIds) > 0)
+                    <div class="fixed bottom-24 left-0 right-0 z-40 px-8 pointer-events-none">
+                        <div class="max-w-7xl mx-auto flex justify-center">
+                            <button
+                                wire:click="startOrder"
+                                class="pointer-events-auto h-16 px-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(79,70,229,0.4)] border border-white/10 transition-all active:scale-95 animate-in slide-in-from-bottom-4"
+                            >
+                                <i data-lucide="clipboard-plus" class="size-5"></i>
+                                Start Order — Table {{ $this->selectedTablesLabel }}
+                                <span class="px-2.5 py-1 bg-white/15 rounded-lg text-[10px]">{{ count($selectedTableIds) }} {{ count($selectedTableIds) === 1 ? 'table' : 'tables' }}</span>
+                            </button>
+                        </div>
+                    </div>
+                @endif
             </div>
 
         @elseif($view === 'menu')
@@ -445,11 +467,11 @@
         @elseif($view === 'bill')
             <div class="max-w-4xl mx-auto w-full pb-64">
                 @php
-                    $session = $this->selectedSession;
-                    $allItems = $session ? $session->orders->flatMap->orderItems : collect();
+                    $order = $this->currentOrder;
+                    $allItems = $order ? $order->orderItems : collect();
                 @endphp
 
-                @if($session)
+                @if($order)
                     <div class="flex flex-col gap-8">
                         <!-- Top Detail Card -->
                         <div class="bg-card border border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
@@ -458,20 +480,20 @@
                             <div class="flex items-start justify-between relative z-10">
                                 <div class="flex flex-col gap-2">
                                     <div class="flex items-center gap-3">
-                                        <h3 class="text-3xl font-black tracking-tight text-foreground uppercase font-mono">Table {{ $session->table->number }}</h3>
-                                        <span class="px-3 py-1 bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 rounded-full text-[8px] font-black tracking-widest uppercase">Active Session</span>
+                                        <h3 class="text-3xl font-black tracking-tight text-foreground uppercase font-mono">Table {{ $order->table_label }}</h3>
+                                        <span class="px-3 py-1 bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 rounded-full text-[8px] font-black tracking-widest uppercase">{{ $order->is_paid ? 'Paid' : 'Open Order' }}</span>
                                     </div>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Session ID: {{ substr($session->id, 0, 8) }}</span>
-                                        <span class="size-1 rounded-full bg-zinc-700"></span>
-                                        <span class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Started {{ $session->started_at->format('g:i A') }}</span>
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Order #{{ $order->order_number }}</span>
+                                        <span class="size-1 rounded-full bg-muted-foreground/50"></span>
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400">Started {{ $order->created_at->format('g:i A') }}</span>
                                     </div>
                                 </div>
                                 <div class="flex flex-col items-end gap-1">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-zinc-600">Primary Waiter</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Primary Waiter</span>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-sm font-black text-foreground">{{ $session->waiter->name }}</span>
-                                        <div class="size-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-black border border-border uppercase">{{ substr($session->waiter->name, 0, 1) }}</div>
+                                        <span class="text-sm font-black text-foreground">{{ $order->creator->name ?? 'N/A' }}</span>
+                                        <div class="size-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-black border border-border uppercase">{{ substr($order->creator->name ?? 'N', 0, 1) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -490,16 +512,16 @@
                                         <div class="flex items-center justify-between px-2">
                                             <h4 @class([
                                                 'text-[10px] font-black uppercase tracking-widest',
-                                                'text-emerald-400' => $status === 'ready',
-                                                'text-blue-400 animate-pulse' => $status === 'preparing',
-                                                'text-zinc-500' => !in_array($status, ['ready', 'preparing'])
+                                                'text-emerald-700 dark:text-emerald-400' => $status === 'ready',
+                                                'text-blue-700 dark:text-blue-400 animate-pulse' => $status === 'preparing',
+                                                'text-muted-foreground' => !in_array($status, ['ready', 'preparing'])
                                             ])>
                                                 {{ $label }}
                                                 @if($status === 'preparing')
                                                     <span class="ml-2 lowercase font-bold italic tracking-normal">(Cooking now...)</span>
                                                 @endif
                                             </h4>
-                                            <span class="text-[9px] font-black text-zinc-700 font-mono">{{ $groupedItems->count() }} Items</span>
+                                            <span class="text-[9px] font-black text-muted-foreground font-mono">{{ $groupedItems->count() }} Items</span>
                                         </div>
 
                                         <div class="grid grid-cols-1 gap-2.5">
@@ -590,52 +612,52 @@
 
                         <!-- Bill Summary -->
                         <div class="bg-card border border-border rounded-3xl p-8 mt-4 space-y-6 shadow-2xl">
-                            <div class="grid grid-cols-2 gap-8 border-b border-white/5 pb-8 relative">
+                            <div class="grid grid-cols-2 gap-8 border-b border-border pb-8 relative">
                                 <div class="space-y-3">
-                                    <div class="flex justify-between text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
+                                    <div class="flex justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
                                         <span>Items Subtotal</span>
-                                        <span class="text-white font-mono">{{ $currency }}{{ number_format($totals['subtotal'], 2) }}</span>
+                                        <span class="text-foreground font-mono">{{ $currency }}{{ number_format($totals['subtotal'], 2) }}</span>
                                     </div>
                                     @if($totals['serviceCharge'] > 0)
-                                        <div class="flex justify-between text-[11px] font-bold text-zinc-500 uppercase tracking-widest font-mono">
+                                        <div class="flex justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-widest font-mono">
                                             <span>Service Charge</span>
-                                            <span class="text-white">{{ $currency }}{{ number_format($totals['serviceCharge'], 2) }}</span>
+                                            <span class="text-foreground">{{ $currency }}{{ number_format($totals['serviceCharge'], 2) }}</span>
                                         </div>
                                     @endif
                                     @if($taxEnabled)
-                                        <div class="flex justify-between text-[11px] font-bold text-zinc-500 uppercase tracking-widest font-mono">
+                                        <div class="flex justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-widest font-mono">
                                             <span>GST ({{ (int)$taxPercent }}%)</span>
-                                            <span class="text-white">{{ $currency }}{{ number_format($totals['taxTotal'], 2) }}</span>
+                                            <span class="text-foreground">{{ $currency }}{{ number_format($totals['taxTotal'], 2) }}</span>
                                         </div>
                                     @endif
                                 </div>
                                 <div class="space-y-3 font-mono">
                                     @if($totals['alreadyPaid'] > 0)
-                                        <div class="flex justify-between text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
+                                        <div class="flex justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
                                             <span>Already Paid</span>
-                                            <span class="text-emerald-400">{{ $currency }}{{ number_format($totals['alreadyPaid'], 2) }}</span>
+                                            <span class="text-emerald-700 dark:text-emerald-400">{{ $currency }}{{ number_format($totals['alreadyPaid'], 2) }}</span>
                                         </div>
                                     @endif
-                                    <div class="flex justify-between text-[11px] font-bold {{ $totals['remainingDue'] < 0.01 ? 'text-zinc-500 opacity-50' : 'text-rose-400' }} uppercase tracking-widest">
+                                    <div class="flex justify-between text-[11px] font-bold {{ $totals['remainingDue'] < 0.01 ? 'text-muted-foreground opacity-70' : 'text-rose-700 dark:text-rose-400' }} uppercase tracking-widest">
                                         <span>Remaining Due</span>
-                                        <span class="{{ $totals['remainingDue'] < 0.01 ? 'text-zinc-500' : 'text-rose-400' }}">{{ $currency }}{{ number_format($totals['remainingDue'], 2) }}</span>
+                                        <span class="{{ $totals['remainingDue'] < 0.01 ? 'text-muted-foreground' : 'text-rose-700 dark:text-rose-400' }}">{{ $currency }}{{ number_format($totals['remainingDue'], 2) }}</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Discount Controls -->
-                            <div class="space-y-4 pt-2 border-t border-white/5">
+                            <div class="space-y-4 pt-2 border-t border-border">
                                 <div class="flex items-center justify-between">
                                     <button 
                                         wire:click="$toggle('showDiscountRow')"
-                                        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors px-3 py-1.5 rounded-lg {{ $showDiscountRow ? 'bg-indigo-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white' }}"
+                                        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors px-3 py-1.5 rounded-lg {{ $showDiscountRow ? 'bg-indigo-600 text-white' : 'bg-muted text-muted-foreground hover:text-foreground' }}"
                                     >
                                         <i data-lucide="tag" class="size-3.5"></i>
                                         {{ $showDiscountRow ? 'Hide Discount' : 'Add Discount' }}
                                     </button>
                                     
                                     @if($totals['discountTotal'] > 0)
-                                        <div class="flex items-center gap-2 text-[11px] font-bold text-emerald-400 uppercase tracking-widest font-mono">
+                                        <div class="flex items-center gap-2 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest font-mono">
                                             <span>Applied Discount</span>
                                             <span>- {{ $currency }}{{ number_format($totals['discountTotal'], 2) }}</span>
                                         </div>
@@ -643,13 +665,13 @@
                                 </div>
 
                                 @if($showDiscountRow)
-                                    <div x-data="{ customValue: @entangle('discountValue') }" class="space-y-3 p-4 rounded-2xl bg-zinc-900/50 border border-white/5 animate-in fade-in slide-in-from-top-2">
+                                    <div x-data="{ customValue: @entangle('discountValue') }" class="space-y-3 p-4 rounded-2xl bg-muted/30 border border-border animate-in fade-in slide-in-from-top-2">
                                         <!-- Presets -->
                                         <div class="flex flex-wrap gap-2">
                                             @foreach($this->discountPresets as $preset)
                                                 <button 
                                                     wire:click="$set('discountValue', {{ $preset }}); $set('discountType', 'percentage')"
-                                                    class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $discountValue == $preset && $discountType === 'percentage' ? 'bg-white text-black shadow-lg shadow-white/10' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700' }}"
+                                                    class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $discountValue == $preset && $discountType === 'percentage' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-muted text-muted-foreground hover:bg-muted/70' }}"
                                                 >
                                                     {{ $preset }}%
                                                 </button>
@@ -659,26 +681,26 @@
                                         <!-- Custom Input -->
                                         <div class="flex items-center gap-3">
                                             <div class="relative flex-1 group">
-                                                <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600 font-mono text-sm group-focus-within:text-indigo-400 transition-colors">
+                                                <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground font-mono text-sm group-focus-within:text-indigo-500 transition-colors">
                                                     {{ $discountType === 'percentage' ? '%' : $currency }}
                                                 </div>
                                                 <input 
                                                     type="number" 
                                                     wire:model.live.debounce.300ms="discountValue"
                                                     placeholder="Custom Value"
-                                                    class="w-full bg-zinc-950 border border-white/10 rounded-xl pl-10 pr-4 h-12 text-sm font-mono text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-700"
+                                                    class="w-full bg-background border border-border rounded-xl pl-10 pr-4 h-12 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-muted-foreground/50"
                                                 />
                                             </div>
-                                            <div class="bg-zinc-950 p-1.5 rounded-xl border border-white/10 flex gap-1 items-center">
+                                            <div class="bg-background p-1.5 rounded-xl border border-border flex gap-1 items-center">
                                                 <button 
                                                     wire:click="$set('discountType', 'percentage')"
-                                                    class="px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all {{ $discountType === 'percentage' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300' }}"
+                                                    class="px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all {{ $discountType === 'percentage' ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground' }}"
                                                 >
                                                     %
                                                 </button>
                                                 <button 
                                                     wire:click="$set('discountType', 'fixed')"
-                                                    class="px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all {{ $discountType === 'fixed' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300' }}"
+                                                    class="px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all {{ $discountType === 'fixed' ? 'bg-indigo-600 text-white' : 'text-muted-foreground hover:text-foreground' }}"
                                                 >
                                                     {{ $currency }}
                                                 </button>
@@ -698,13 +720,13 @@
                             
                             <div class="flex items-center justify-between pt-4">
                                 <div class="flex flex-col">
-                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-1">Session Grand Total</span>
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Session Grand Total</span>
                                     <div class="flex items-baseline gap-2">
-                                        <span class="text-4xl font-black text-white font-mono">{{ $currency }}{{ number_format($totals['grandTotal'], 2) }}</span>
+                                        <span class="text-4xl font-black text-foreground font-mono">{{ $currency }}{{ number_format($totals['grandTotal'], 2) }}</span>
                                     </div>
                                 </div>
                                 <div class="text-right flex flex-col items-end gap-1">
-                                    <div class="px-4 py-1.5 rounded-full bg-zinc-950 border border-white/10 text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                                    <div class="px-4 py-1.5 rounded-full bg-muted border border-border text-[9px] font-black uppercase tracking-widest text-muted-foreground">
                                         Payment Method: {{ strtoupper($paymentMethod) }}
                                     </div>
                                     <button 
@@ -741,7 +763,7 @@
                                 @else
                                     <div class="h-14 col-span-2 relative">
                                         <button 
-                                            wire:click="freeTable"
+                                            wire:click="freeTables"
                                             wire:loading.attr="disabled"
                                             @disabled(!$this->canCheckout)
                                             @class([
@@ -752,7 +774,7 @@
                                         >
                                             <i data-lucide="{{ $this->canCheckout ? 'log-out' : 'lock' }}" class="size-5" wire:loading.remove></i>
                                             <div wire:loading class="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            {{ $this->canCheckout ? 'Checkout & Free Table' : 'Serve all items to Checkout' }}
+                                            {{ $this->canCheckout ? 'Checkout & Free Tables' : 'Serve all items to Checkout' }}
                                         </button>
                                         
                                         @if(!$this->canCheckout)
@@ -794,7 +816,7 @@
                 @else
                     <div class="flex flex-col items-center justify-center py-32 text-zinc-500 border-2 border-dashed border-white/5 rounded-3xl">
                         <i data-lucide="inbox" class="size-16 mb-4 opacity-10 font-mono">SESSION_NULL</i>
-                        <p class="font-bold uppercase tracking-widest">No active session found for this table</p>
+                        <p class="font-bold uppercase tracking-widest">No open order selected</p>
                         <button wire:click="setView('home')" class="mt-8 px-8 py-3 bg-indigo-600 rounded-full text-white text-[10px] font-black uppercase tracking-widest">Return to Overview</button>
                     </div>
                 @endif
@@ -1049,10 +1071,51 @@
             @endif
         </button>
     </nav>
-    @include('livewire.waiter.partials.bill-receipt')
+    <!-- Receipt Preview Modal (works without a physical printer) -->
+    <div
+        x-data="{ open: false }"
+        x-on:show-receipt-preview.window="open = true"
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-[120] flex items-center justify-center bg-background/80 backdrop-blur-sm p-6 print:hidden"
+        x-transition:enter="transition duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+    >
+        <div class="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]" @click.away="open = false">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+                <h3 class="text-sm font-black uppercase tracking-widest text-foreground">Receipt Preview</h3>
+                <button @click="open = false" aria-label="Close preview" class="size-9 rounded-xl bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground">
+                    <i data-lucide="x" class="size-4"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 bg-zinc-100 dark:bg-zinc-900 flex justify-center receipt-preview-wrap">
+                @include('livewire.waiter.partials.bill-receipt')
+            </div>
+            <div class="p-4 border-t border-border flex gap-3">
+                <button
+                    @click="open = false; printThermalReceipt()"
+                    class="flex-1 h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
+                >
+                    <i data-lucide="printer" class="size-4"></i>
+                    Print / Save as PDF
+                </button>
+                <button @click="open = false" class="h-12 px-6 bg-muted hover:bg-muted/70 text-foreground rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Print Logic & Styles -->
     <style>
+        /* On-screen receipt preview: override the receipt's default hidden state */
+        .receipt-preview-wrap #printable-receipt {
+            display: block;
+            zoom: 1.5;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
         @media print {
             /* 1. Force Page Size & Margins - CRITICAL for Thermal Printers */
             @page {
@@ -1115,32 +1178,30 @@
             alertSound.play().catch(e => console.log('Audio play failed:', e));
         });
 
-        $wire.on('trigger-print-bill', () => {
+        window.printThermalReceipt = () => {
             const receipt = document.getElementById('printable-receipt');
             if (!receipt) return;
-            
+
             const originalParent = receipt.parentElement;
             const originalNextSibling = receipt.nextSibling;
-            
-            // Remove hidden class to ensure it's visible in body
-            receipt.classList.remove('hidden');
-            
-            // Move to body to bypass layout constraints
+
+            // Move to body to bypass layout constraints (print CSS hides everything else)
             document.body.appendChild(receipt);
-            
-            // Small delay to ensure browser acknowledges the move before printing
+
+            // Small delay to ensure browser acknowledges the move before printing.
+            // Without a physical printer the browser dialog still offers "Save as PDF".
             setTimeout(() => {
                 window.print();
-                
-                // Restore original position and hidden state
-                receipt.classList.add('hidden');
+
                 if (originalNextSibling) {
                     originalParent.insertBefore(receipt, originalNextSibling);
                 } else {
                     originalParent.appendChild(receipt);
                 }
             }, 100);
-        });
+        };
+
+        $wire.on('trigger-print-bill', () => window.printThermalReceipt());
 
         $wire.on('notify', () => {});
     </script>

@@ -5,7 +5,6 @@ namespace App\Livewire\Kitchen;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\MenuItem;
-use App\Models\TableSession;
 use App\Enums\OrderStatus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -36,10 +35,12 @@ class Dashboard extends Component
     }
 
     #[Computed]
-    public function sessions()
+    public function orders()
     {
-        return TableSession::with(['table', 'orders.orderItems.menuItem', 'orders.orderItems.kot'])
-            ->where('status', 'active')
+        return Order::open()
+            ->whereHas('orderItems')
+            ->with(['tables', 'orderItems.menuItem', 'orderItems.kot'])
+            ->orderBy('created_at')
             ->get();
     }
 
@@ -61,32 +62,30 @@ class Dashboard extends Component
     #[Computed]
     public function counts()
     {
-        $sessions = $this->sessions;
-        
+        $orders = $this->orders;
+
         $counts = [
-            'all' => $sessions->count(),
+            'all' => $orders->count(),
             'pending' => 0,
             'preparing' => 0,
             'ready' => 0,
             'served' => 0,
         ];
 
-        foreach ($sessions as $session) {
+        foreach ($orders as $order) {
             $hasPending = false;
             $hasPreparing = false;
             $hasReady = false;
             $hasServed = false;
-            
-            foreach ($session->orders as $order) {
-                foreach ($order->orderItems as $item) {
-                    $val = is_object($item->status) ? $item->status->value : $item->status;
-                    if ($val === OrderStatus::PENDING->value || $val === 'sent') $hasPending = true;
-                    elseif ($val === OrderStatus::PREPARING->value) $hasPreparing = true;
-                    elseif ($val === OrderStatus::READY->value) $hasReady = true;
-                    elseif ($val === OrderStatus::SERVED->value) $hasServed = true;
-                }
+
+            foreach ($order->orderItems as $item) {
+                $val = is_object($item->status) ? $item->status->value : $item->status;
+                if ($val === OrderStatus::PENDING->value || $val === 'sent') $hasPending = true;
+                elseif ($val === OrderStatus::PREPARING->value) $hasPreparing = true;
+                elseif ($val === OrderStatus::READY->value) $hasReady = true;
+                elseif ($val === OrderStatus::SERVED->value) $hasServed = true;
             }
-            
+
             if ($hasPending) $counts['pending']++;
             if ($hasPreparing) $counts['preparing']++;
             if ($hasReady) $counts['ready']++;
@@ -167,12 +166,16 @@ class Dashboard extends Component
         }
     }
 
-    public function forceCloseSession($sessionId)
+    public function forceCloseOrder($orderId)
     {
-        $session = TableSession::find($sessionId);
-        if ($session) {
-            $session->update(['status' => 'closed']);
-            $this->dispatch('notify', message: "Table #" . $session->table->number . " cleared from kitchen display.", type: 'warning');
+        $order = Order::find($orderId);
+        if ($order) {
+            $order->orderItems()
+                ->whereNotIn('status', [OrderStatus::SERVED, OrderStatus::CANCELLED])
+                ->update(['status' => OrderStatus::SERVED, 'served_at' => now()]);
+            $order->update(['status' => OrderStatus::SERVED]);
+
+            $this->dispatch('notify', message: "Table {$order->table_label} cleared from kitchen display.", type: 'warning');
         }
     }
 

@@ -1,7 +1,7 @@
 @php
     $settings = \App\Models\Setting::first();
-    $session = $this->selectedSession;
-    $allItems = $session ? $session->orders->flatMap->orderItems : collect();
+    $order = $this->currentOrder;
+    $allItems = $order ? $order->orderItems : collect();
     
     // Group items by menu_item_id to sum quantities
     $groupedItems = $allItems->groupBy('menu_item_id')->map(function ($items) {
@@ -21,7 +21,7 @@
 <div id="printable-receipt" class="hidden print:block font-mono text-[8px] text-black bg-white w-[80mm] p-2 leading-tight">
     <!-- Top Order ID -->
     <div class="text-center font-bold mb-1 uppercase text-[9px]">
-        *** {{ substr($session->id ?? 'POS', -4) }} ***
+        *** {{ $order->order_number ?? 'POS' }} ***
     </div>
 
     <!-- Header -->
@@ -32,19 +32,19 @@
             <p class="text-[8px] uppercase font-bold">GSTIN: {{ $settings?->gst_no }}</p>
         @endif
         <div class="mt-4 mb-2">
-            <h2 class="text-[9px] font-bold uppercase underline decoration-1 underline-offset-2">{{ $settings?->tax_enabled ? 'TAX INVOICE' : 'INVOICE' }}</h2>
+            <h2 class="text-[9px] font-bold uppercase underline decoration-1 underline-offset-2">{{ ($totals['taxTotal'] ?? 0) > 0 ? 'TAX INVOICE' : 'INVOICE' }}</h2>
         </div>
     </div>
 
     <!-- Bill Info -->
     <div class="space-y-0.5 mb-2 text-[8px] font-bold">
         <div class="flex justify-between">
-            <span>BILL NO. : #{{ substr($session->id ?? 'N/A', -6) }}</span>
+            <span>BILL NO. : #{{ $order->order_number ?? 'N/A' }}</span>
             <span>DATE: {{ now()->format('d/m/y') }}</span>
         </div>
         <div class="flex justify-between">
-            <span>TABLE : {{ $session->table->number ?? 'N/A' }}</span>
-            <span>WAITER: {{ substr($session->waiter->name ?? 'N/A', 0, 8) }}</span>
+            <span>TABLE : {{ $order->table_label ?? 'N/A' }}</span>
+            <span>WAITER: {{ substr($order->creator->name ?? 'N/A', 0, 8) }}</span>
         </div>
     </div>
 
@@ -84,9 +84,9 @@
                 <span>-{{ number_format($totals['discountTotal'], 2) }}</span>
             </div>
         @endif
-        @if($settings?->tax_enabled)
+        @if(($totals['taxTotal'] ?? 0) > 0)
             @php
-                $displayRate = (float)($settings?->tax_rate ?? 5) / 2;
+                $displayRate = (float)($taxPercent ?? ($settings?->tax_rate ?? 5)) / 2;
             @endphp
             <div class="flex justify-between">
                 <span>CGST @ {{ $displayRate }}% :</span>

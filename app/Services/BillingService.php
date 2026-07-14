@@ -3,40 +3,29 @@
 namespace App\Services;
 
 use App\Models\Order;
-use App\Models\TableSession;
 use Illuminate\Support\Collection;
 
 class BillingService
 {
     /**
-     * Calculate all totals for a table session.
+     * Calculate all totals for a single order. Same return shape as the
+     * old session totals so views keep their keys.
      */
-    public function calculateSessionTotals(TableSession $session): array
+    public function calculateOrderTotals(Order $order): array
     {
-        $orders = $session->orders()->with(['orderItems.menuItem', 'paymentTransactions'])->get();
-        
-        $subtotal = 0;
-        $taxTotal = 0;
-        $serviceCharge = 0;
-        $discountTotal = 0;
-        $alreadyPaid = 0;
+        $order->loadMissing(['orderItems.menuItem', 'paymentTransactions']);
 
-        foreach ($orders as $order) {
-            $orderSubtotal = $order->orderItems->sum(function ($item) {
-                return $item->menuItem->price * $item->quantity;
-            });
+        $subtotal = $order->orderItems->sum(function ($item) {
+            return $item->menuItem->price * $item->quantity;
+        });
 
-            $subtotal += $orderSubtotal;
-            $serviceCharge += $order->service_charge;
-            $discountTotal += $order->discount_value;
-            
-            $alreadyPaid += $order->paymentTransactions->where('status', 'completed')->sum('amount');
-        }
+        $serviceCharge = (float) $order->service_charge;
+        $discountTotal = (float) $order->discount_value;
+        $alreadyPaid = (float) $order->paymentTransactions->where('status', 'completed')->sum('amount');
 
-        // Apply GST based on system settings
         $settings = \App\Models\Setting::first();
         $taxEnabled = $settings?->tax_enabled ?? true;
-        $taxRate = (float)($settings?->tax_rate ?? 5);
+        $taxRate = (float) ($settings?->tax_rate ?? 5);
 
         $taxableAmount = round(($subtotal + $serviceCharge) - $discountTotal, 2);
         $taxTotal = $taxEnabled ? round($taxableAmount * ($taxRate / 100), 2) : 0;
@@ -54,4 +43,5 @@ class BillingService
             'remainingDue' => max(0, $remainingDue),
         ];
     }
+
 }
