@@ -75,17 +75,19 @@ class Reports extends Component
     protected function getPeriodStats($from, $to)
     {
         $cacheKey = "admin.reports.stats.{$from}.{$to}";
-        $stats = Cache::remember($cacheKey, 3600, function () use ($from, $to) {
-            return Order::whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
+
+        // Cache plain values, not Eloquent models — models fail to unserialize from Redis
+        return Cache::remember($cacheKey, 3600, function () use ($from, $to) {
+            $stats = Order::whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59'])
                 ->where('status', '!=', 'cancelled')
                 ->select(DB::raw('SUM(total) as revenue'), DB::raw('COUNT(*) as orders'))
                 ->first();
-        });
 
-        return [
-            'revenue' => (float)($stats->revenue ?? 0),
-            'orders' => (int)($stats->orders ?? 0)
-        ];
+            return [
+                'revenue' => (float)($stats->revenue ?? 0),
+                'orders' => (int)($stats->orders ?? 0)
+            ];
+        });
     }
 
     protected function calculateChange($current, $previous)
@@ -97,26 +99,28 @@ class Reports extends Component
     public function getDailyTrendProperty()
     {
         $cacheKey = "admin.reports.daily_trend.{$this->fromDate}.{$this->toDate}";
-        $data = Cache::remember($cacheKey, 3600, function () {
-            return Order::whereBetween('created_at', [$this->fromDate . ' 00:00:00', $this->toDate . ' 23:59:59'])
+
+        return Cache::remember($cacheKey, 3600, function () {
+            $data = Order::whereBetween('created_at', [$this->fromDate . ' 00:00:00', $this->toDate . ' 23:59:59'])
                 ->where('status', '!=', 'cancelled')
                 ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total) as total'))
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get();
-        });
 
-        return [
-            'labels' => $data->pluck('date')->map(fn($d) => Carbon::parse($d)->format('M d'))->toArray(),
-            'values' => $data->pluck('total')->map(fn($v) => (float)$v)->toArray(),
-        ];
+            return [
+                'labels' => $data->pluck('date')->map(fn($d) => Carbon::parse($d)->format('M d'))->toArray(),
+                'values' => $data->pluck('total')->map(fn($v) => (float)$v)->toArray(),
+            ];
+        });
     }
 
     public function getCategoryDistributionProperty()
     {
         $cacheKey = "admin.reports.category_dist.{$this->fromDate}.{$this->toDate}";
-        $data = Cache::remember($cacheKey, 3600, function () {
-            return DB::table('order_items')
+
+        return Cache::remember($cacheKey, 3600, function () {
+            $data = DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->join('menu_items', 'order_items.menu_item_id', '=', 'menu_items.id')
                 ->join('categories', 'menu_items.category_id', '=', 'categories.id')
@@ -125,18 +129,19 @@ class Reports extends Component
                 ->select('categories.name', DB::raw('SUM(menu_items.price * order_items.quantity) as revenue'))
                 ->groupBy('categories.name')
                 ->get();
-        });
 
-        return [
-            'labels' => $data->pluck('name')->toArray(),
-            'values' => $data->pluck('revenue')->map(fn($v) => (float)$v)->toArray(),
-        ];
+            return [
+                'labels' => $data->pluck('name')->toArray(),
+                'values' => $data->pluck('revenue')->map(fn($v) => (float)$v)->toArray(),
+            ];
+        });
     }
 
     public function getTopItemsProperty()
     {
         $cacheKey = "admin.reports.top_items.{$this->fromDate}.{$this->toDate}";
-        return Cache::remember($cacheKey, 3600, function () {
+
+        $rows = Cache::remember($cacheKey, 3600, function () {
             return DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->join('menu_items', 'order_items.menu_item_id', '=', 'menu_items.id')
@@ -153,8 +158,12 @@ class Reports extends Component
                 ->groupBy('menu_items.name', 'categories.name')
                 ->orderByDesc('revenue')
                 ->limit(5)
-                ->get();
+                ->get()
+                ->map(fn ($row) => (array) $row)
+                ->toArray();
         });
+
+        return collect($rows)->map(fn ($row) => (object) $row);
     }
 
     public function render()

@@ -12,7 +12,7 @@ services:
       - public_assets:/var/www/public
       - storage_data:/var/www/storage
     depends_on:
-      - mysql
+      - pgsql
       - redis
 
   nginx:
@@ -29,16 +29,16 @@ services:
     depends_on:
       - app
 
-  mysql:
-    image: mysql:8
-    container_name: restaurantsaga_mysql_prod
+  pgsql:
+    image: postgres:16
+    container_name: restaurantsaga_pgsql_prod
     restart: always
     # Using env_file instead of environment interpolation to avoid reading local .env
-    # Make sure to add MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD to your .env.production file!
+    # Make sure to add POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD to your .env.production file!
     env_file:
       - .env.production
     volumes:
-      - mysql_data_prod:/var/lib/mysql
+      - pgsql_data_prod:/var/lib/postgresql/data
 
   redis:
     image: redis:alpine
@@ -60,7 +60,7 @@ services:
     depends_on:
       - app
       - redis
-      - mysql
+      - pgsql
 
   scheduler:
     image: restaurantsaga:prod
@@ -74,7 +74,7 @@ services:
     depends_on:
       - app
       - redis
-      - mysql
+      - pgsql
 
   reverb:
     image: restaurantsaga:prod
@@ -92,7 +92,7 @@ services:
       - redis
 
 volumes:
-  mysql_data_prod:
+  pgsql_data_prod:
   redis_data_prod:
   public_assets:
   storage_data:

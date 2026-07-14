@@ -19,6 +19,7 @@
     <div class="absolute top-8 right-8 z-50">
         <button
             onclick="toggleTheme()"
+            aria-label="Toggle theme"
             class="size-14 bg-card/50 backdrop-blur-xl shadow-glow-sm border border-border/50 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all text-muted-foreground hover:text-foreground group"
         >
             <i data-lucide="sun" class="dark:hidden text-amber-500 size-6 group-hover:rotate-45 transition-transform duration-500"></i>
@@ -57,7 +58,7 @@
                     Table management, order taking, and bill processing for service staff.
                 </p>
                 
-                <div class="mt-10 flex items-center text-amber-500 font-black text-[10px] uppercase tracking-[0.3em] opacity-40 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                <div class="mt-10 flex items-center text-amber-700 dark:text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] opacity-80 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
                     Access Portal <i data-lucide="arrow-right" class="ml-2 size-5"></i>
                 </div>
             </a>
@@ -75,7 +76,7 @@
                     Full system control, menu management, analytics, and staff settings.
                 </p>
                 
-                <div class="mt-10 flex items-center text-indigo-500 font-black text-[10px] uppercase tracking-[0.3em] opacity-40 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                <div class="mt-10 flex items-center text-indigo-700 dark:text-indigo-400 font-black text-[10px] uppercase tracking-[0.3em] opacity-80 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
                     Access Dashboard <i data-lucide="arrow-right" class="ml-2 size-5"></i>
                 </div>
             </a>
@@ -93,7 +94,7 @@
                     Real-time order display, status updates, and cooking queue management.
                 </p>
                 
-                <div class="mt-10 flex items-center text-emerald-500 font-black text-[10px] uppercase tracking-[0.3em] opacity-40 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                <div class="mt-10 flex items-center text-emerald-700 dark:text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] opacity-80 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
                     Access KDS <i data-lucide="arrow-right" class="ml-2 size-5"></i>
                 </div>
             </a>

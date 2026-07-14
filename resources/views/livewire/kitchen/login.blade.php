@@ -53,7 +53,7 @@
                             class="w-full pl-12 pr-12 h-14 bg-black/40 border border-zinc-700 rounded-2xl text-zinc-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium"
                             required
                         />
-                        <button type="button" @click="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-emerald-500 transition-colors focus:outline-none">
+                        <button type="button" @click="showPassword = !showPassword" :aria-label="showPassword ? 'Hide password' : 'Show password'" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-emerald-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-md">
                             <i x-show="!showPassword" data-lucide="eye" class="size-5"></i>
                             <i x-show="showPassword" data-lucide="eye-off" class="size-5" style="display: none;"></i>
                         </button>

@@ -12,7 +12,7 @@ services:
       - .:/var/www
 
     depends_on:
-      - mysql
+      - pgsql
       - redis
 
   nginx:
@@ -30,21 +30,20 @@ services:
     depends_on:
       - app
 
-  mysql:
-    image: mysql:8
+  pgsql:
+    image: postgres:16
 
-    container_name: restaurantsaga_mysql
+    container_name: restaurantsaga_pgsql
 
     restart: always
 
     environment:
-      MYSQL_DATABASE: restaurantsaga
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: restaurant
-      MYSQL_PASSWORD: restaurant
+      POSTGRES_DB: restaurantsaga
+      POSTGRES_USER: restaurant
+      POSTGRES_PASSWORD: restaurant
 
     volumes:
-      - mysql_data:/var/lib/mysql
+      - pgsql_data:/var/lib/postgresql/data
 
   redis:
     image: redis:alpine
@@ -100,4 +99,4 @@ services:
       - .:/var/www
 
 volumes:
-  mysql_data:
+  pgsql_data:

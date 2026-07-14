@@ -15,7 +15,7 @@
 
     $taxTotal = (float)($totals['taxTotal'] ?? 0);
     $halfTax = $taxTotal / 2;
-    $currency = $settings->currency ?? '₹';
+    $currency = $settings?->currency ?? '₹';
 @endphp
 
 <div id="printable-receipt" class="hidden print:block font-mono text-[8px] text-black bg-white w-[80mm] p-2 leading-tight">
@@ -26,13 +26,13 @@
 
     <!-- Header -->
     <div class="text-center mb-3">
-        <h1 class="text-[11px] font-black uppercase mb-1">{{ $settings->restaurant_name ?? 'RESTAURANT' }}</h1>
-        <p class="text-[8px] uppercase font-bold">{{ $settings->restaurant_address ?? 'RESTAURANT ADDRESS' }}</p>
-        @if($settings->gst_no)
-            <p class="text-[8px] uppercase font-bold">GSTIN: {{ $settings->gst_no }}</p>
+        <h1 class="text-[11px] font-black uppercase mb-1">{{ $settings?->restaurant_name ?? 'RESTAURANT' }}</h1>
+        <p class="text-[8px] uppercase font-bold">{{ $settings?->restaurant_address ?? 'RESTAURANT ADDRESS' }}</p>
+        @if($settings?->gst_no)
+            <p class="text-[8px] uppercase font-bold">GSTIN: {{ $settings?->gst_no }}</p>
         @endif
         <div class="mt-4 mb-2">
-            <h2 class="text-[9px] font-bold uppercase underline decoration-1 underline-offset-2">{{ $settings->tax_enabled ? 'TAX INVOICE' : 'INVOICE' }}</h2>
+            <h2 class="text-[9px] font-bold uppercase underline decoration-1 underline-offset-2">{{ $settings?->tax_enabled ? 'TAX INVOICE' : 'INVOICE' }}</h2>
         </div>
     </div>
 
@@ -84,9 +84,9 @@
                 <span>-{{ number_format($totals['discountTotal'], 2) }}</span>
             </div>
         @endif
-        @if($settings->tax_enabled)
+        @if($settings?->tax_enabled)
             @php
-                $displayRate = (float)($settings->tax_rate ?? 5) / 2;
+                $displayRate = (float)($settings?->tax_rate ?? 5) / 2;
             @endphp
             <div class="flex justify-between">
                 <span>CGST @ {{ $displayRate }}% :</span>
@@ -112,6 +112,6 @@
     <!-- Footer -->
     <div class="text-center mt-4 space-y-1.5 uppercase font-bold text-[8px]">
         <p>(TIME: {{ now()->format('h:i A') }})</p>
-        <p class="text-[9px] font-black">{{ $settings->receipt_footer ?? 'THANK YOU FOR YOUR BUSINESS!' }}</p>
+        <p class="text-[9px] font-black">{{ $settings?->receipt_footer ?? 'THANK YOU FOR YOUR BUSINESS!' }}</p>
     </div>
 </div>

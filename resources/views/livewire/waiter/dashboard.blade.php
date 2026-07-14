@@ -67,7 +67,7 @@
                     </div>
                 </button>
 
-                <button wire:click="$refresh" wire:loading.class="animate-spin" class="size-11 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center text-white border border-white/10 transition-all active:scale-95 disabled:opacity-50">
+                <button wire:click="$refresh" wire:loading.class="animate-spin" aria-label="Refresh" class="size-11 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center text-white border border-white/10 transition-all active:scale-95 disabled:opacity-50">
                     <i data-lucide="refresh-cw" class="size-4" wire:loading.remove></i>
                     <div wire:loading class="size-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </button>
@@ -849,6 +849,9 @@
                             <button 
                                 type="button" 
                                 @click="$store.theme.toggle()"
+                                role="switch"
+                                :aria-checked="$store.theme.current === 'dark'"
+                                aria-label="Dark mode"
                                 class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none z-10"
                                 :class="$store.theme.current === 'dark' ? 'bg-indigo-600' : 'bg-muted'"
                             >

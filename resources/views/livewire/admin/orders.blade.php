@@ -19,7 +19,7 @@
                     class="w-full h-14 pl-12 pr-4 rounded-2xl bg-card border border-border/50 focus:bg-background focus:ring-4 focus:ring-primary/10 transition-all outline-none font-medium shadow-sm"
                 >
             </div>
-            <button class="size-14 rounded-2xl bg-card border border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-all shadow-sm">
+            <button aria-label="Filter orders" class="size-14 rounded-2xl bg-card border border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-all shadow-sm">
                 <i data-lucide="filter" class="size-5"></i>
             </button>
         </div>

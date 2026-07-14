@@ -15,12 +15,12 @@
         <a 
             href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}" 
             wire:navigate
-            class="flex flex-col items-center gap-1 w-20 transition-all duration-300 {{ $isActive ? 'text-amber-500 scale-110' : 'text-muted-foreground' }}"
+            class="flex flex-col items-center gap-1 w-20 transition-all duration-300 {{ $isActive ? 'text-amber-700 dark:text-amber-400 scale-110' : 'text-muted-foreground' }}"
         >
             <i data-lucide="{{ $item['icon'] }}" class="size-6"></i>
             <span class="text-[10px] font-black uppercase tracking-widest">{{ $item['label'] }}</span>
             @if($isActive)
-                <div class="absolute -bottom-1 size-1 bg-amber-500 rounded-full shadow-glow"></div>
+                <div class="absolute -bottom-1 size-1 bg-amber-600 rounded-full shadow-glow"></div>
             @endif
         </a>
     @endforeach

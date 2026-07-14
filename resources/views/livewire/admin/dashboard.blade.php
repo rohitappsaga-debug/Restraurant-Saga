@@ -7,14 +7,14 @@
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
             <h1 class="text-3xl font-black text-foreground tracking-tight">Dashboard Overview</h1>
-            <p class="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1 opacity-70">Welcome back, {{ auth()->user()->name }}</p>
+            <p class="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">Welcome back, {{ auth()->user()->name }}</p>
         </div>
         
         <div class="flex items-center gap-4 bg-card p-1.5 rounded-[1.25rem] border border-border/50 shadow-sm">
             @foreach(['today', 'week', 'month', 'all'] as $p)
                 <button 
                     wire:click="$set('period', '{{ $p }}')"
-                    class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $period === $p ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'text-muted-foreground hover:bg-muted' }}"
+                    class="px-5 py-3 min-h-[44px] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all {{ $period === $p ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' : 'text-muted-foreground hover:bg-muted' }}"
                 >
                     {{ $p }}
                 </button>
@@ -48,10 +48,10 @@
             />
         </div>
         <div wire:key="stat-occupancy">
-            <x-admin.dashboard.stat-card 
-                label="Active Tables" 
-                :value="$occupancyRate . '%'" 
-                :trend="$occupancyRate . '% Occupancy'" 
+            <x-admin.dashboard.stat-card
+                label="Active Tables"
+                :value="$occupiedTables . ' / ' . $totalTables"
+                :trend="$occupancyRate . '% Occupancy'"
                 icon="grid-3x3"
                 variant="orange"
             />

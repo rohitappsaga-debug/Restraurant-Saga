@@ -31,7 +31,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement('ALTER TABLE orders MODIFY order_number BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        // Auto-incrementing order_number without making it the primary key (driver-specific DDL)
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('CREATE SEQUENCE orders_order_number_seq OWNED BY orders.order_number');
+            DB::statement("ALTER TABLE orders ALTER COLUMN order_number SET DEFAULT nextval('orders_order_number_seq')");
+        } elseif (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE orders MODIFY order_number BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        }
     }
 
     /**

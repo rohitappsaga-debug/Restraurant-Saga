@@ -62,7 +62,7 @@
                             class="w-full h-12 pl-12 pr-12 bg-muted/30 border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                             required
                         />
-                        <button type="button" @click="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors focus:outline-none">
+                        <button type="button" @click="showPassword = !showPassword" :aria-label="showPassword ? 'Hide password' : 'Show password'" class="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md">
                             <i x-show="!showPassword" data-lucide="eye" class="w-5 h-5"></i>
                             <i x-show="showPassword" data-lucide="eye-off" class="w-5 h-5" style="display: none;"></i>
                         </button>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="mt-6 text-center">
-            <a href="/" wire:navigate class="inline-flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
+            <a href="/" wire:navigate class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 Back to Selection
             </a>

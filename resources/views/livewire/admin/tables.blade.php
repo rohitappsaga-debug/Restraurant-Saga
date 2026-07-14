@@ -46,7 +46,7 @@
             <div class="absolute -right-2 -top-2 text-foreground/5 dark:text-white/5 group-hover:scale-110 transition-transform duration-500">
                 <i data-lucide="table-2" class="size-24"></i>
             </div>
-            <p class="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest mb-1 relative z-10">Total Tables</p>
+            <p class="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 relative z-10">Total Tables</p>
             <div class="text-foreground font-black text-4xl tracking-tighter relative z-10">{{ $this->stats['total'] }}</div>
         </div>
 
@@ -54,7 +54,7 @@
             <div class="absolute -right-2 -top-2 text-emerald-500/5 group-hover:scale-110 transition-transform duration-500">
                 <i data-lucide="check-circle-2" class="size-24"></i>
             </div>
-            <p class="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest mb-1 relative z-10">Free</p>
+            <p class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1 relative z-10">Free</p>
             <div class="text-emerald-500 font-black text-4xl tracking-tighter relative z-10">{{ $this->stats['free'] }}</div>
         </div>
 
@@ -62,7 +62,7 @@
             <div class="absolute -right-2 -top-2 text-rose-500/5 group-hover:scale-110 transition-transform duration-500">
                 <i data-lucide="user-minus" class="size-24"></i>
             </div>
-            <p class="text-[10px] font-black text-rose-500/60 uppercase tracking-widest mb-1 relative z-10">Occupied</p>
+            <p class="text-[10px] font-black text-rose-700 dark:text-rose-400 uppercase tracking-widest mb-1 relative z-10">Occupied</p>
             <div class="text-rose-500 font-black text-4xl tracking-tighter relative z-10">{{ $this->stats['occupied'] }}</div>
         </div>
 
@@ -70,7 +70,7 @@
             <div class="absolute -right-2 -top-2 text-orange-500/5 group-hover:scale-110 transition-transform duration-500">
                 <i data-lucide="calendar-days" class="size-24"></i>
             </div>
-            <p class="text-[10px] font-black text-orange-500/60 uppercase tracking-widest mb-1 relative z-10">Reserved</p>
+            <p class="text-[10px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1 relative z-10">Reserved</p>
             <div class="text-orange-500 font-black text-4xl tracking-tighter relative z-10">{{ $this->stats['reserved'] }}</div>
         </div>
     </div>
@@ -107,26 +107,28 @@
                                     <i data-lucide="crown" class="size-4 text-amber-500 fill-amber-500"></i>
                                 @endif
                             </div>
-                            <div class="flex items-center gap-1.5 text-xs text-muted-foreground/60 font-bold uppercase tracking-widest leading-none">
+                            <div class="flex items-center gap-1.5 text-xs text-muted-foreground font-bold uppercase tracking-widest leading-none">
                                 <i data-lucide="users" class="size-3"></i>
                                 {{ $table->capacity }} guests
                             </div>
                         </div>
                     </div>
                     
-                    <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                    <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 focus-within:translate-x-0">
                         <button
                             wire:click.stop="openEdit('{{ $table->id }}')"
-                            class="p-2.5 bg-background shadow-sm rounded-2xl text-muted-foreground hover:text-primary border border-border/50 hover:bg-primary/5 transition-all"
+                            class="p-3.5 bg-background shadow-sm rounded-2xl text-muted-foreground hover:text-primary border border-border/50 hover:bg-primary/5 transition-all"
                             title="Edit"
+                            aria-label="Edit table {{ $table->number }}"
                         >
                             <i data-lucide="settings" class="size-4"></i>
                         </button>
                         @if($table->group_id)
                             <button
                                 wire:click.stop="ungroup('{{ $table->group_id }}')"
-                                class="p-2.5 bg-background shadow-sm rounded-2xl text-orange-500 hover:bg-orange-500/10 border border-border/50 transition-all"
+                                class="p-3.5 bg-background shadow-sm rounded-2xl text-orange-600 dark:text-orange-400 hover:bg-orange-500/10 border border-border/50 transition-all"
                                 title="Ungroup"
+                                aria-label="Ungroup table {{ $table->number }}"
                             >
                                 <i data-lucide="link-2-off" class="size-4"></i>
                             </button>
@@ -134,8 +136,9 @@
                         <button
                             wire:click.stop="delete('{{ $table->id }}')"
                             wire:confirm="Permanent deletion of Table {{ $table->number }}. Proceed?"
-                            class="p-2.5 bg-background shadow-sm rounded-2xl text-rose-500/50 hover:text-rose-500 hover:bg-rose-500/10 border border-border/50 transition-all"
+                            class="p-3.5 bg-background shadow-sm rounded-2xl text-rose-600/70 dark:text-rose-400/70 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 border border-border/50 transition-all"
                             title="Delete"
+                            aria-label="Delete table {{ $table->number }}"
                         >
                             <i data-lucide="trash-2" class="size-4"></i>
                         </button>
@@ -178,8 +181,8 @@
 
                     @php
                         $statusClass = match($table->status->value) {
-                            'free' => 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-                            'occupied' => 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+                            'free' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+                            'occupied' => 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
                             'reserved' => 'bg-orange-500/10 text-orange-600 border-orange-500/20',
                             default => 'bg-muted text-muted-foreground'
                         };

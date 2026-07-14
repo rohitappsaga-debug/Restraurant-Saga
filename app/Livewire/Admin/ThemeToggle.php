@@ -39,6 +39,7 @@ class ThemeToggle extends Component
                     @click="$store.theme.toggle()"
                     class="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-90 group relative"
                     title="Toggle Theme"
+                    aria-label="Toggle theme"
                 >
                     <div class="relative size-5 overflow-hidden font-bold">
                         <div class="absolute inset-0 flex items-center justify-center transition-all duration-500"

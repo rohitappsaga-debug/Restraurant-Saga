@@ -98,10 +98,10 @@
                 $avatarColor = $this->getAvatarColor($user->name);
                 $role = $user->role->value;
                 $roleStyle = match($role) {
-                    'admin' => 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-                    'waiter' => 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-                    'kitchen' => 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-                    default => 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+                    'admin' => 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+                    'waiter' => 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+                    'kitchen' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+                    default => 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20',
                 };
             @endphp
             <div wire:key="user-{{ $user->id }}" class="group relative p-6 bg-card border border-border/50 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 flex items-center gap-5">
@@ -117,14 +117,15 @@
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="font-bold text-foreground text-lg truncate pr-8">{{ $user->name }}</h3>
-                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute top-6 right-6">
-                            <button wire:click="openEdit('{{ $user->id }}')" class="size-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all">
+                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity absolute top-6 right-6">
+                            <button wire:click="openEdit('{{ $user->id }}')" aria-label="Edit {{ $user->name }}" class="size-11 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all">
                                 <i data-lucide="edit-3" class="size-4"></i>
                             </button>
-                            <button 
-                                wire:click="delete('{{ $user->id }}')" 
+                            <button
+                                wire:click="delete('{{ $user->id }}')"
                                 wire:confirm="Are you sure you want to remove this user?"
-                                class="size-8 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+                                aria-label="Delete {{ $user->name }}"
+                                class="size-11 rounded-lg bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition-all"
                             >
                                 <i data-lucide="trash-2" class="size-4"></i>
                             </button>
@@ -138,7 +139,7 @@
                         </span>
                         <div class="flex items-center gap-1.5">
                             <span class="size-1.5 rounded-full {{ $user->active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
-                            <span class="text-[10px] font-bold uppercase tracking-widest {{ $user->active ? 'text-emerald-500' : 'text-rose-500' }}">
+                            <span class="text-[10px] font-bold uppercase tracking-widest {{ $user->active ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400' }}">
                                 {{ $user->active ? 'Active' : 'Inactive' }}
                             </span>
                         </div>

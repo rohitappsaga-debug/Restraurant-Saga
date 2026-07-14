@@ -20,7 +20,7 @@
                 @endforeach
             </div>
 
-            <button class="size-12 flex items-center justify-center bg-card border border-border/50 text-muted-foreground hover:text-primary transition-all rounded-2xl shadow-sm group">
+            <button aria-label="Download report" class="size-12 flex items-center justify-center bg-card border border-border/50 text-muted-foreground hover:text-primary transition-all rounded-2xl shadow-sm group">
                 <i data-lucide="download" class="size-5 group-hover:scale-110 transition-transform"></i>
             </button>
         </div>
@@ -37,7 +37,7 @@
                 <div>
                     <p class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">Total Revenue</p>
                     <h3 class="text-3xl font-black text-foreground">{{ $settings['currency'] }}{{ number_format($summary['revenue']['value'], 2) }}</h3>
-                    <div class="mt-2 flex items-center gap-1.5 text-[10px] font-bold {{ $summary['revenue']['change'] >= 0 ? 'text-emerald-500' : 'text-rose-500' }}">
+                    <div class="mt-2 flex items-center gap-1.5 text-[10px] font-bold {{ $summary['revenue']['change'] >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400' }}">
                         <i data-lucide="{{ $summary['revenue']['change'] >= 0 ? 'trending-up' : 'trending-down' }}" class="size-3"></i>
                         {{ $summary['revenue']['change'] >= 0 ? '+' : '' }}{{ round($summary['revenue']['change'], 1) }}% from last period
                     </div>
@@ -54,7 +54,7 @@
                 <div>
                     <p class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">Total Orders</p>
                     <h3 class="text-3xl font-black text-foreground">{{ number_format($summary['orders']['value']) }}</h3>
-                    <div class="mt-2 flex items-center gap-1.5 text-[10px] font-bold {{ $summary['orders']['change'] >= 0 ? 'text-emerald-500' : 'text-rose-500' }}">
+                    <div class="mt-2 flex items-center gap-1.5 text-[10px] font-bold {{ $summary['orders']['change'] >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400' }}">
                         <i data-lucide="{{ $summary['orders']['change'] >= 0 ? 'trending-up' : 'trending-down' }}" class="size-3"></i>
                         {{ $summary['orders']['change'] >= 0 ? '+' : '' }}{{ round($summary['orders']['change'], 1) }}% from last period
                     </div>
@@ -71,7 +71,7 @@
                 <div>
                     <p class="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">Avg Order Value</p>
                     <h3 class="text-3xl font-black text-foreground">{{ $settings['currency'] }}{{ number_format($summary['avgValue']['value'], 2) }}</h3>
-                    <div class="mt-2 flex items-center gap-1.5 text-[10px] font-bold {{ $summary['avgValue']['change'] >= 0 ? 'text-emerald-500' : 'text-rose-500' }}">
+                    <div class="mt-2 flex items-center gap-1.5 text-[10px] font-bold {{ $summary['avgValue']['change'] >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400' }}">
                         <i data-lucide="{{ $summary['avgValue']['change'] >= 0 ? 'trending-up' : 'trending-down' }}" class="size-3"></i>
                         {{ $summary['avgValue']['change'] >= 0 ? '+' : '' }}{{ round($summary['avgValue']['change'], 1) }}% from last period
                     </div>
@@ -163,23 +163,23 @@
 
             <div class="space-y-6 flex-1">
                 <div class="p-6 bg-muted/20 border border-border/30 rounded-2xl group hover:bg-muted/40 transition-all">
-                    <p class="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest mb-1">Gross Sales</p>
+                    <p class="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Gross Sales</p>
                     <div class="flex items-baseline justify-between">
                         <h4 class="text-2xl font-black text-foreground">{{ $settings['currency'] }}{{ number_format($summary['revenue']['value'], 2) }}</h4>
-                        <span class="text-[10px] font-bold text-emerald-500">100%</span>
+                        <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">100%</span>
                     </div>
                 </div>
 
                 <div class="p-6 bg-muted/20 border border-border/30 rounded-2xl group hover:bg-muted/40 transition-all">
-                    <p class="text-[10px] font-black text-orange-500/60 uppercase tracking-widest mb-1">Total Tax (5%)</p>
+                    <p class="text-[10px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1">Total Tax (5%)</p>
                     <div class="flex items-baseline justify-between">
                         <h4 class="text-2xl font-black text-foreground">{{ $settings['currency'] }}{{ number_format($summary['revenue']['value'] * 0.05, 2) }}</h4>
-                        <span class="text-[10px] font-bold text-orange-500">Taxed</span>
+                        <span class="text-[10px] font-bold text-orange-700 dark:text-orange-400">Taxed</span>
                     </div>
                 </div>
 
                 <div class="p-6 bg-primary/5 border border-primary/20 rounded-2xl group hover:bg-primary/10 transition-all">
-                    <p class="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1">Net Sales</p>
+                    <p class="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Net Sales</p>
                     <div class="flex items-baseline justify-between">
                         <h4 class="text-2xl font-black text-primary">{{ $settings['currency'] }}{{ number_format($summary['revenue']['value'] * 0.95, 2) }}</h4>
                         <span class="text-[10px] font-bold text-primary">Profit Base</span>

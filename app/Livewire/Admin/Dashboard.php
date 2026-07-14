@@ -18,6 +18,8 @@ class Dashboard extends Component
     public $dailyRevenue = 0;
     public $todayOrders = 0;
     public $occupancyRate = 0;
+    public $occupiedTables = 0;
+    public $totalTables = 0;
     public $hourlySales = [];
     public $chartLabels = [];
     public $chartTitle = 'Hourly Volume';
@@ -75,13 +77,18 @@ class Dashboard extends Component
         $this->dailyRevenue = $stats['revenue'];
         $this->todayOrders = $stats['orders'];
 
-        // Occupancy Rate (Always Live, cached for 1 min)
-        $this->occupancyRate = Cache::remember('admin.dashboard.occupancy', 60, function () {
+        // Occupancy (Always Live, cached for 1 min)
+        $occupancy = Cache::remember('admin.dashboard.occupancy_stats', 60, function () {
             $stats = Table::selectRaw('COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as occupied', [TableStatus::OCCUPIED])->first();
-            $totalTables = $stats->total ?? 0;
-            $occupiedTables = $stats->occupied ?? 0;
-            return $totalTables > 0 ? round(($occupiedTables / $totalTables) * 100) : 0;
+            return [
+                'total' => (int) ($stats->total ?? 0),
+                'occupied' => (int) ($stats->occupied ?? 0),
+            ];
         });
+
+        $this->totalTables = $occupancy['total'];
+        $this->occupiedTables = $occupancy['occupied'];
+        $this->occupancyRate = $occupancy['total'] > 0 ? round(($occupancy['occupied'] / $occupancy['total']) * 100) : 0;
     }
 
     private function loadChartData()

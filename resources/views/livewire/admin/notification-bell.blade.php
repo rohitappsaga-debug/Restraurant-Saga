@@ -1,7 +1,8 @@
 <div wire:poll.30s>
-    <button 
+    <button
         @click="isNotificationsOpen = !isNotificationsOpen"
-        class="p-2.5 rounded-xl text-slate-500 hover:text-[#111827] hover:bg-slate-100 transition-all relative active:scale-90 group"
+        class="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all relative active:scale-90 group"
+        aria-label="Notifications{{ $unreadCount > 0 ? ', ' . $unreadCount . ' unread' : '' }}"
     >
         <i data-lucide="bell" class="size-5 group-hover:rotate-12 transition-transform"></i>
         @if($unreadCount > 0)

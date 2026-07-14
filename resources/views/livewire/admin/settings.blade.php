@@ -31,6 +31,9 @@
                 <button 
                     type="button" 
                     @click="$store.theme.toggle()"
+                    role="switch"
+                    :aria-checked="$store.theme.current === 'dark'"
+                    aria-label="Dark mode"
                     class="relative z-10 inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-4 border-transparent transition-colors duration-200 focus:outline-none"
                     :class="$store.theme.current === 'dark' ? 'bg-primary' : 'bg-muted'"
                 >
@@ -53,20 +56,20 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Restaurant Name</label>
-                    <input type="text" wire:model="restaurant_name" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-medium tracking-tight text-foreground">
+                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-restaurant_name">Restaurant Name</label>
+                    <input type="text" wire:model="restaurant_name" id="setting-restaurant_name" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-medium tracking-tight text-foreground">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Restaurant Address</label>
-                    <input type="text" wire:model="restaurant_address" placeholder="Full address for bill header" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-medium text-foreground">
+                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-restaurant_address">Restaurant Address</label>
+                    <input type="text" wire:model="restaurant_address" id="setting-restaurant_address" placeholder="Full address for bill header" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-medium text-foreground">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">GST Number</label>
-                    <input type="text" wire:model="gst_no" placeholder="e.g. 29ABCDE1234F1Z5" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-medium uppercase tracking-widest text-foreground">
+                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-gst_no">GST Number</label>
+                    <input type="text" wire:model="gst_no" id="setting-gst_no" placeholder="e.g. 29ABCDE1234F1Z5" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-medium uppercase tracking-widest text-foreground">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Currency Symbol</label>
-                    <input type="text" wire:model="currency" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-black text-center text-foreground">
+                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-currency">Currency Symbol</label>
+                    <input type="text" wire:model="currency" id="setting-currency" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none focus:ring-4 focus:ring-primary/10 font-black text-center text-foreground">
                 </div>
             </div>
         </div>
@@ -86,6 +89,9 @@
                     <button 
                         type="button" 
                         @click="$wire.set('tax_enabled', !@js($tax_enabled))"
+                        role="switch"
+                        aria-checked="{{ $tax_enabled ? 'true' : 'false' }}"
+                        aria-label="Enable tax calculation"
                         class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-4 border-transparent transition-colors duration-200 focus:outline-none {{ $tax_enabled ? 'bg-primary' : 'bg-muted' }}"
                     >
                         <span class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out {{ $tax_enabled ? 'translate-x-6' : 'translate-x-0' }}"></span>
@@ -93,9 +99,9 @@
                 </div>
                 
                 <div class="space-y-2 {{ !$tax_enabled ? 'opacity-30 pointer-events-none' : '' }}">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Tax Rate (%)</label>
+                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-tax_rate">Tax Rate (%)</label>
                     <div class="relative">
-                        <input type="number" step="0.1" wire:model="tax_rate" class="h-14 w-full pl-5 pr-12 rounded-xl bg-background border border-border/50 focus:ring-4 focus:ring-primary/10 transition-all outline-none font-black text-lg text-foreground">
+                        <input type="number" step="0.1" wire:model="tax_rate" id="setting-tax_rate" class="h-14 w-full pl-5 pr-12 rounded-xl bg-background border border-border/50 focus:ring-4 focus:ring-primary/10 transition-all outline-none font-black text-lg text-foreground">
                         <span class="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">%</span>
                     </div>
                     <p class="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Applied to all orders. Current levy: {{ $tax_rate }}%</p>
@@ -116,9 +122,9 @@
                 </div>
                 <div class="flex flex-wrap gap-3">
                     @foreach($discount_presets as $v)
-                        <div class="h-10 pl-4 pr-1.5 bg-background border border-border/50 rounded-xl flex items-center gap-3 shadow-sm group">
+                        <div class="h-12 pl-4 pr-1.5 bg-background border border-border/50 rounded-xl flex items-center gap-3 shadow-sm group">
                             <span class="text-xs font-black text-primary">{{ $v }}%</span>
-                            <button wire:click="removeDiscountPreset({{ $v }})" class="size-7 rounded-lg bg-muted/50 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center">
+                            <button wire:click="removeDiscountPreset({{ $v }})" aria-label="Remove {{ $v }}% discount preset" class="size-9 rounded-lg bg-muted/50 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center">
                                 <i data-lucide="x" class="size-3.5"></i>
                             </button>
                         </div>
@@ -126,7 +132,8 @@
                     <div class="flex items-center gap-2">
                         <input 
                             type="number" 
-                            wire:model="new_discount_preset" 
+                            wire:model="new_discount_preset"
+                            aria-label="New discount percentage"
                             placeholder="Add Discount %" 
                             class="h-10 w-32 px-4 rounded-xl bg-muted/30 border border-border/50 text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-primary/10"
                         >
@@ -155,14 +162,17 @@
                         <button 
                             type="button" 
                             @click="$wire.set('printer_enabled', !@js($printer_enabled))"
+                        role="switch"
+                        aria-checked="{{ $printer_enabled ? 'true' : 'false' }}"
+                        aria-label="Enable printing"
                             class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-4 border-transparent transition-colors duration-200 focus:outline-none {{ $printer_enabled ? 'bg-indigo-500' : 'bg-muted' }}"
                         >
                             <span class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out {{ $printer_enabled ? 'translate-x-6' : 'translate-x-0' }}"></span>
                         </button>
                     </div>
                     <div class="space-y-2 {{ !$printer_enabled ? 'opacity-30 pointer-events-none' : '' }}">
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Printer Name</label>
-                        <input type="text" wire:model="printer_name" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none font-medium text-foreground">
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-printer_name">Printer Name</label>
+                        <input type="text" wire:model="printer_name" id="setting-printer_name" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none font-medium text-foreground">
                     </div>
                 </div>
             </div>
@@ -174,12 +184,12 @@
                 </h2>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Opening Time</label>
-                        <input type="text" wire:model="open_time" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 font-bold text-sm tracking-widest outline-none focus:ring-4 focus:ring-primary/10 text-foreground">
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-open_time">Opening Time</label>
+                        <input type="text" wire:model="open_time" id="setting-open_time" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 font-bold text-sm tracking-widest outline-none focus:ring-4 focus:ring-primary/10 text-foreground">
                     </div>
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Closing Time</label>
-                        <input type="text" wire:model="close_time" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 font-bold text-sm tracking-widest outline-none focus:ring-4 focus:ring-primary/10 text-foreground">
+                        <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-close_time">Closing Time</label>
+                        <input type="text" wire:model="close_time" id="setting-close_time" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 font-bold text-sm tracking-widest outline-none focus:ring-4 focus:ring-primary/10 text-foreground">
                     </div>
                 </div>
             </div>
@@ -200,6 +210,9 @@
                     <button 
                         type="button"
                         @click="$wire.set('order_notifications', !@js($order_notifications))"
+                        role="switch"
+                        aria-checked="{{ $order_notifications ? 'true' : 'false' }}"
+                        aria-label="Order notifications"
                         class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none {{ $order_notifications ? 'bg-primary' : 'bg-muted' }}"
                     >
                         <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out {{ $order_notifications ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -213,6 +226,9 @@
                     <button 
                         type="button"
                         @click="$wire.set('payment_notifications', !@js($payment_notifications))"
+                        role="switch"
+                        aria-checked="{{ $payment_notifications ? 'true' : 'false' }}"
+                        aria-label="Payment notifications"
                         class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none {{ $payment_notifications ? 'bg-primary' : 'bg-muted' }}"
                     >
                         <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out {{ $payment_notifications ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -226,6 +242,9 @@
                     <button 
                         type="button"
                         @click="$wire.set('low_stock_alerts', !@js($low_stock_alerts))"
+                        role="switch"
+                        aria-checked="{{ $low_stock_alerts ? 'true' : 'false' }}"
+                        aria-label="Low stock alerts"
                         class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none {{ $low_stock_alerts ? 'bg-primary' : 'bg-muted' }}"
                     >
                         <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out {{ $low_stock_alerts ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -256,8 +275,8 @@
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Receipt Footer Message</label>
-                    <input type="text" wire:model="receipt_footer" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none font-medium text-foreground">
+                    <label class="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1" for="setting-receipt_footer">Receipt Footer Message</label>
+                    <input type="text" wire:model="receipt_footer" id="setting-receipt_footer" class="h-14 w-full px-5 rounded-xl bg-muted/30 border border-border/50 focus:bg-background transition-all outline-none font-medium text-foreground">
                 </div>
             </div>
         </div>
@@ -274,7 +293,7 @@
                 </h3>
                 <div class="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                     <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Healthy</span>
+                    <span class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Healthy</span>
                 </div>
             </div>
             <div class="grid grid-cols-2 lg:grid-cols-3 gap-10 relative z-10">
@@ -288,7 +307,7 @@
                 </div>
                 <div class="space-y-1">
                     <span class="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 leading-none">DB Driver</span>
-                    <span class="text-sm font-black text-emerald-600 uppercase">{{ $system['db_driver'] }}</span>
+                    <span class="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase">{{ $system['db_driver'] }}</span>
                 </div>
             </div>
         </div>

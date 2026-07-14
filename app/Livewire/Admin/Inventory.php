@@ -171,6 +171,8 @@ class Inventory extends Component
             'stats' => [
                 'total' => Ingredient::count(),
                 'low' => Ingredient::whereRaw('stock <= min_level')->count(),
+                'units' => Ingredient::distinct()->count('unit'),
+                'healthy' => Ingredient::whereRaw('stock > min_level')->count(),
             ]
         ])->layout('layouts.admin');
     }

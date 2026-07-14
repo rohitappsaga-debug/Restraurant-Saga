@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <h2 class="text-lg font-extrabold text-foreground tracking-tight">{{ $title }}</h2>
-            <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1 opacity-70">{{ $subtitle }}</p>
+            <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">{{ $subtitle }}</p>
         </div>
         <div class="flex items-center gap-4">
             <div class="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">

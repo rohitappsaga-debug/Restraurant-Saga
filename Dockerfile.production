@@ -50,11 +50,12 @@ RUN apk add --no-cache \
     git \
     oniguruma-dev \
     sqlite-dev \
-    mysql-client
+    libpq-dev \
+    postgresql-client
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql pdo_sqlite mbstring zip opcache pcntl bcmath exif
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql pdo_sqlite mbstring zip opcache pcntl bcmath exif
 
 # Install Redis extension via PECL
 RUN apk add --no-cache pcre-dev $PHPIZE_DEPS \

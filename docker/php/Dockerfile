@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     sqlite3 \
     libsqlite3-dev \
-    default-mysql-client
+    libpq-dev \
+    postgresql-client
 
 # Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
@@ -23,7 +24,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 RUN docker-php-ext-install \
     pdo \
-    pdo_mysql \
+    pdo_pgsql \
     pdo_sqlite \
     mbstring \
     exif \
