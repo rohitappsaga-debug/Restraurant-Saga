@@ -12,7 +12,7 @@ class AuthService
         $this->userRepository = $userRepository;
     }
 
-    public function login(array $credentials) {
+    public function login(array $credentials, string $deviceName = 'auth-token') {
         $user = $this->userRepository->findByEmail($credentials['email']);
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             abort(401, 'Invalid credentials');
@@ -22,7 +22,7 @@ class AuthService
             abort(403, 'User account is inactive');
         }
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken($deviceName)->plainTextToken;
 
         return [
             'user' => clone $user,

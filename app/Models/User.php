@@ -37,4 +37,5 @@ class User extends Authenticatable
     public function activityLogs() { return $this->hasMany(ActivityLog::class, 'user_id'); }
     public function notifications() { return $this->hasMany(Notification::class, 'user_id'); }
     public function createdOrders() { return $this->hasMany(Order::class, 'created_by'); }
+    public function deviceTokens() { return $this->hasMany(DeviceToken::class, 'user_id'); }
 }

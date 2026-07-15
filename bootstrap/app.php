@@ -21,4 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(function (\Illuminate\Http\Request $request) {
             return $request->is('api/*') || $request->wantsJson();
         });
+
+        // Domain rule violations (occupied table, settled order, …) are
+        // client errors, not server faults.
+        $exceptions->render(function (\DomainException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*') || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        });
     })->create();

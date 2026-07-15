@@ -16,7 +16,7 @@ class TableRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'number' => 'required|integer|unique:tables,number,' . $this->route('table'),
+            'number' => ['required', 'integer', Rule::unique('tables', 'number')->ignore($this->route('table'))],
             'capacity' => 'required|integer|min:1',
             'status' => ['required', Rule::enum(TableStatus::class)],
             'group_id' => 'nullable|string',
