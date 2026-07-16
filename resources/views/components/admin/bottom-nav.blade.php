@@ -14,7 +14,7 @@
         @endphp
         <a 
             href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}" 
-            wire:navigate
+            wire:navigate.hover
             class="flex flex-col items-center gap-1 w-20 transition-all duration-300 {{ $isActive ? 'text-amber-700 dark:text-amber-400 scale-110' : 'text-muted-foreground' }}"
         >
             <i data-lucide="{{ $item['icon'] }}" class="size-6"></i>

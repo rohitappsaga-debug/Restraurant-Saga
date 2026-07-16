@@ -23,7 +23,7 @@ class BillingService
         $discountTotal = (float) $order->discount_value;
         $alreadyPaid = (float) $order->paymentTransactions->where('status', 'completed')->sum('amount');
 
-        $settings = \App\Models\Setting::first();
+        $settings = \App\Models\Setting::current();
         $taxEnabled = $settings?->tax_enabled ?? true;
         $taxRate = (float) ($settings?->tax_rate ?? 5);
 

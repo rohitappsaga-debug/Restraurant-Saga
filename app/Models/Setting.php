@@ -8,6 +8,25 @@ class Setting extends Model
 {
     use HasUuids;
 
+    public static function current()
+    {
+        $attributes = cache()->rememberForever('global_settings_attributes', function () {
+            return self::first()?->getAttributes();
+        });
+
+        return $attributes ? (new self())->setRawAttributes($attributes, true) : null;
+    }
+
+    protected static function booted()
+    {
+        static::saved(function () {
+            cache()->forget('global_settings_attributes');
+        });
+        static::deleted(function () {
+            cache()->forget('global_settings_attributes');
+        });
+    }
+
     public $incrementing = false;
     protected $keyType = 'string';
 

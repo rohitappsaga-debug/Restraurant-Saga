@@ -1,7 +1,7 @@
 <div>
     <div class="flex items-center justify-between mb-8">
         <h2 class="text-lg font-extrabold text-foreground tracking-tight">Live Orders <span class="text-muted-foreground font-normal ml-1">({{ $liveOrders->count() }})</span></h2>
-        <a href="{{ route('admin.orders') }}" wire:navigate class="text-[11px] font-black text-primary hover:bg-primary hover:text-white flex items-center gap-1.5 transition-all group uppercase tracking-[0.2em] bg-primary/10 px-4 py-2 min-h-[44px] rounded-xl">
+        <a href="{{ route('admin.orders') }}" wire:navigate.hover class="text-[11px] font-black text-primary hover:bg-primary hover:text-white flex items-center gap-1.5 transition-all group uppercase tracking-[0.2em] bg-primary/10 px-4 py-2 min-h-[44px] rounded-xl">
             View All
             <i data-lucide="chevron-right" class="size-4 group-hover:translate-x-1 transition-transform"></i>
         </a>

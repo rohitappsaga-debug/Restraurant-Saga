@@ -211,17 +211,21 @@
                                                 @if($statusValue === 'sent' || $statusValue === 'pending')
                                                     <button 
                                                         wire:click="updateItemStatus('{{ $item->order_id }}', '{{ $item->id }}', 'preparing')"
-                                                        class="h-9 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm shadow-blue-600/10"
+                                                        wire:loading.attr="disabled"
+                                                        class="h-9 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm shadow-blue-600/10 disabled:opacity-50"
                                                     >
-                                                        <i data-lucide="play" class="size-3.5 fill-current"></i>
+                                                        <i data-lucide="play" class="size-3.5 fill-current" wire:loading.remove wire:target="updateItemStatus('{{ $item->order_id }}', '{{ $item->id }}', 'preparing')"></i>
+                                                        <div wire:loading wire:target="updateItemStatus('{{ $item->order_id }}', '{{ $item->id }}', 'preparing')" class="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                                         Start
                                                     </button>
                                                 @elseif($statusValue === 'preparing')
                                                     <button 
                                                         wire:click="updateItemStatus('{{ $item->order_id }}', '{{ $item->id }}', 'ready')"
-                                                        class="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm shadow-emerald-600/10"
+                                                        wire:loading.attr="disabled"
+                                                        class="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm shadow-emerald-600/10 disabled:opacity-50"
                                                     >
-                                                        <i data-lucide="check" class="size-3.5"></i>
+                                                        <i data-lucide="check" class="size-3.5" wire:loading.remove wire:target="updateItemStatus('{{ $item->order_id }}', '{{ $item->id }}', 'ready')"></i>
+                                                        <div wire:loading wire:target="updateItemStatus('{{ $item->order_id }}', '{{ $item->id }}', 'ready')" class="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                                         Finish
                                                     </button>
                                                 @elseif($statusValue === 'ready')
@@ -341,6 +345,9 @@
                             <p class="text-muted-foreground/40 font-black uppercase tracking-widest text-xs">No menu items found</p>
                         </div>
                     @endforelse
+                </div>
+                <div class="mt-8">
+                    {{ $this->menuItems->links() }}
                 </div>
             </div>
         @endif

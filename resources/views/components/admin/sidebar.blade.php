@@ -56,7 +56,7 @@
             @endphp
             <a 
                 href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}" 
-                wire:navigate
+                wire:navigate.hover
                 class="flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all group {{ $isActive 
                     ? 'text-primary bg-primary/10' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50' }}"

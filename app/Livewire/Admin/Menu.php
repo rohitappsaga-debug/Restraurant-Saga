@@ -298,7 +298,7 @@ class Menu extends Component
         $categories = Category::all();
 
         $settings = \Illuminate\Support\Facades\Cache::rememberForever('settings', function() {
-            return \App\Models\Setting::first()?->toArray() ?? ['currency' => '₹'];
+            return \App\Models\Setting::current()?->toArray() ?? ['currency' => '₹'];
         });
 
         return view('livewire.admin.menu', [

@@ -136,14 +136,14 @@
                                         {{ $index + 1 }}
                                     </div>
                                 </td>
-                                <td class="py-5 px-8 font-bold text-foreground">{{ $item->name }}</td>
+                                <td class="py-5 px-8 font-bold text-foreground">{{ $item['name'] }}</td>
                                 <td class="py-5 px-8">
                                     <span class="px-3 py-1 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/10">
-                                        {{ $item->category }}
+                                        {{ $item['category'] }}
                                     </span>
                                 </td>
-                                <td class="py-5 px-8 font-medium text-muted-foreground">{{ number_format($item->qty) }} units</td>
-                                <td class="py-5 px-8 text-right font-black text-foreground">{{ $settings['currency'] }}{{ number_format($item->revenue, 2) }}</td>
+                                <td class="py-5 px-8 font-medium text-muted-foreground">{{ number_format($item['qty']) }} units</td>
+                                <td class="py-5 px-8 text-right font-black text-foreground">{{ $settings['currency'] }}{{ number_format($item['revenue'], 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>

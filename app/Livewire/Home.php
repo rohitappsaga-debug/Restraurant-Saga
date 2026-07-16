@@ -11,7 +11,7 @@ class Home extends Component
     #[Layout('layouts.guest')]
     public function render()
     {
-        $settings = Setting::first();
+        $settings = Setting::current();
         return view('livewire.home', [
             'restaurantName' => $settings?->restaurant_name ?? 'Restaurant Management System',
         ]);

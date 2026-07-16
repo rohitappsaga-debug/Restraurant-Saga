@@ -46,7 +46,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-10 px-4">
             <!-- Waiter Card -->
-            <a href="/waiter/login" wire:navigate class="group relative p-10 bg-card/60 backdrop-blur-xl rounded-[3rem] border border-border/50 shadow-glow-sm hover:shadow-glow hover:border-amber-500/50 transition-all duration-500 text-left overflow-hidden">
+            <a href="/waiter/login" wire:navigate.hover class="group relative p-10 bg-card/60 backdrop-blur-xl rounded-[3rem] border border-border/50 shadow-glow-sm hover:shadow-glow hover:border-amber-500/50 transition-all duration-500 text-left overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-amber-500/0 via-amber-500/0 to-amber-500/[0.03] group-hover:to-amber-500/[0.08] transition-all duration-700"></div>
                 
                 <div class="size-20 bg-amber-500/10 rounded-[1.75rem] border border-amber-500/20 flex items-center justify-center mb-8 text-amber-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
@@ -64,7 +64,7 @@
             </a>
 
             <!-- Admin Card -->
-            <a href="/admin/login" wire:navigate class="group relative p-10 bg-card/60 backdrop-blur-xl rounded-[3rem] border border-border/50 shadow-glow-sm hover:shadow-glow hover:border-indigo-500/50 transition-all duration-500 text-left overflow-hidden">
+            <a href="/admin/login" wire:navigate.hover class="group relative p-10 bg-card/60 backdrop-blur-xl rounded-[3rem] border border-border/50 shadow-glow-sm hover:shadow-glow hover:border-indigo-500/50 transition-all duration-500 text-left overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-indigo-500/0 to-indigo-500/[0.03] group-hover:to-indigo-500/[0.08] transition-all duration-700"></div>
                 
                 <div class="size-20 bg-indigo-500/10 rounded-[1.75rem] border border-indigo-500/20 flex items-center justify-center mb-8 text-indigo-500 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
@@ -82,7 +82,7 @@
             </a>
 
             <!-- Kitchen Card -->
-            <a href="/kitchen/login" wire:navigate class="group relative p-10 bg-card/60 backdrop-blur-xl rounded-[3rem] border border-border/50 shadow-glow-sm hover:shadow-glow hover:border-emerald-500/50 transition-all duration-500 text-left overflow-hidden">
+            <a href="/kitchen/login" wire:navigate.hover class="group relative p-10 bg-card/60 backdrop-blur-xl rounded-[3rem] border border-border/50 shadow-glow-sm hover:shadow-glow hover:border-emerald-500/50 transition-all duration-500 text-left overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/[0.03] group-hover:to-emerald-500/[0.08] transition-all duration-700"></div>
                 
                 <div class="size-20 bg-emerald-500/10 rounded-[1.75rem] border border-emerald-500/20 flex items-center justify-center mb-8 text-emerald-500 group-hover:scale-110 group-hover:rotate-2 transition-all duration-500">

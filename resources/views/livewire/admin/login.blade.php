@@ -93,7 +93,7 @@
         </div>
 
         <div class="mt-6 text-center">
-            <a href="/" wire:navigate class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
+            <a href="/" wire:navigate.hover class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-xl text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 Back to Selection
             </a>

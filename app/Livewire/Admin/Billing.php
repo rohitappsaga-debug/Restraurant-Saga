@@ -100,7 +100,7 @@ class Billing extends Component
             return $item->quantity * ($item->menuItem->price ?? 0);
         });
 
-        $settings = Setting::first();
+        $settings = Setting::current();
         $taxEnabled = $settings?->tax_enabled ?? true;
         $taxRate = (float)($settings?->tax_rate ?? 5);
         
@@ -179,7 +179,7 @@ class Billing extends Component
 
     public function render()
     {
-        $globalSettings = Setting::first();
+        $globalSettings = Setting::current();
         $settingsData = [
             'currency' => $globalSettings?->currency ?? '₹',
             'taxRate' => (float) ($globalSettings?->tax_rate ?? 5),

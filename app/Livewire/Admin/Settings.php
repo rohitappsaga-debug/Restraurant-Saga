@@ -44,7 +44,7 @@ class Settings extends Component
 
     public function mount()
     {
-        $settings = Setting::first();
+        $settings = Setting::current();
         if (!$settings) {
             $settings = Setting::create([
                 'restaurant_name' => 'Restaurant',
@@ -102,7 +102,7 @@ class Settings extends Component
             'tax_rate' => 'numeric|min:0|max:100',
         ]);
 
-        $settings = Setting::first();
+        $settings = Setting::current();
         $settings->update([
             'restaurant_name' => $this->restaurant_name,
             'restaurant_address' => $this->restaurant_address,

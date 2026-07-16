@@ -101,7 +101,7 @@ class Orders extends Component
                       ->orWhere('id', 'like', '%' . $this->search . '%');
                 });
             })
-            ->with(['orderItems.menuItem', 'table']);
+            ->with(['orderItems.menuItem', 'tables']);
     }
 
     public function getStatusCountsProperty()

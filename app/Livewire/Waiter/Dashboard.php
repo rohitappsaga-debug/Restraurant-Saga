@@ -18,10 +18,13 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
+use Livewire\WithPagination;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
+    use WithPagination;
+
     #[Url]
     public $view = 'home'; // home, alerts, profile, menu, summary, bill
     public $search = '';
@@ -104,7 +107,7 @@ class Dashboard extends Component
         return MenuItem::with(['modifiers', 'categoryInfo'])
             ->when($this->selectedCategoryId, fn($q) => $q->where('category_id', $this->selectedCategoryId))
             ->when($this->menuSearch, fn($q) => $q->where('name', 'like', '%' . $this->menuSearch . '%'))
-            ->get();
+            ->paginate(24);
     }
 
     #[Computed]
@@ -154,14 +157,14 @@ class Dashboard extends Component
     #[Computed]
     public function enabledPaymentMethods()
     {
-        $settings = \App\Models\Setting::first();
+        $settings = \App\Models\Setting::current();
         return $settings->enabled_payment_methods ?? ['cash', 'card', 'upi'];
     }
 
     #[Computed]
     public function discountPresets()
     {
-        $settings = \App\Models\Setting::first();
+        $settings = \App\Models\Setting::current();
         return $settings->discount_presets ?? [5, 10, 15, 20];
     }
 
@@ -235,7 +238,7 @@ class Dashboard extends Component
         if (in_array($this->view, ['bill'])) {
             // Full order totals from DB
             if ($this->currentOrder) {
-                $settings = \App\Models\Setting::first();
+                $settings = \App\Models\Setting::current();
                 $this->taxEnabled = $settings?->tax_enabled ?? true;
                 $this->taxPercent = (float)($settings?->tax_rate ?? 5);
 
@@ -258,7 +261,7 @@ class Dashboard extends Component
             }
         } else {
             // Cart-based totals for active ordering
-            $settings = \App\Models\Setting::first();
+            $settings = \App\Models\Setting::current();
             $this->taxEnabled = $settings?->tax_enabled ?? true;
             $this->taxPercent = (float)($settings?->tax_rate ?? 5);
 
@@ -282,7 +285,7 @@ class Dashboard extends Component
         return view('livewire.waiter.dashboard', [
             'user' => Auth::user(),
             'totals' => $totals,
-            'currency' => \App\Models\Setting::first()?->currency ?? '₹'
+            'currency' => \App\Models\Setting::current()?->currency ?? '₹'
         ]);
     }
 
@@ -307,7 +310,7 @@ class Dashboard extends Component
 
     private function calculateTax($amount, $rate = null)
     {
-        $settings = \App\Models\Setting::first();
+        $settings = \App\Models\Setting::current();
         if (!$settings || !$settings->tax_enabled) return 0;
         
         $rate = $rate ?? (float)$settings->tax_rate;

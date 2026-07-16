@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@restaurant.com'],
             [
                 'name' => 'Admin User',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => UserRole::ADMIN,
                 'active' => true,
             ]
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'waiter@restaurant.com'],
             [
                 'name' => 'Test Waiter',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => UserRole::WAITER,
                 'active' => true,
             ]
@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'kitchen@restaurant.com'],
             [
                 'name' => 'Kitchen Staff',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => UserRole::KITCHEN,
                 'active' => true,
             ]
@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'manager@restaurant.com'],
             [
                 'name' => 'Restaurant Manager',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => UserRole::MANAGER,
                 'active' => true,
             ]

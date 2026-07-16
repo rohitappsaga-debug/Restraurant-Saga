@@ -96,7 +96,7 @@ class OrderController extends ApiController
         return $this->respond([
             'order' => new OrderResource($order),
             'totals' => $this->billingService->calculateOrderTotals($order),
-            'currency' => \App\Models\Setting::first()?->currency ?? '₹',
+            'currency' => \App\Models\Setting::current()?->currency ?? '₹',
         ]);
     }
 

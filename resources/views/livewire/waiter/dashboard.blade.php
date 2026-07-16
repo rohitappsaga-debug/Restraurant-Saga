@@ -98,22 +98,14 @@
                                 default => 'bg-zinc-800 text-zinc-500 border-white/5'
                             };
                         @endphp
-                        <div class="relative group">
+                        <div class="relative group" x-data="{ isSelected: {{ in_array($table->id, $selectedTableIds) ? 'true' : 'false' }} }">
                             <button 
                                 wire:key="table-{{ $table->id }}"
                                 wire:click="{{ $table->status->value === 'cleaning' ? '' : "toggleTableSelection('{$table->id}')" }}"
-                                wire:loading.attr="disabled"
-                                wire:target="toggleTableSelection('{{ $table->id }}')"
-                                @class([
-                                    'w-full flex flex-col justify-between p-6 rounded-3xl bg-card border transition-all text-left group relative disabled:opacity-50 shadow-sm hover:shadow-md',
-                                    'border-border/60 hover:border-indigo-500/50' => $table->status->value !== 'cleaning' && !in_array($table->id, $selectedTableIds),
-                                    'border-indigo-600 ring-2 ring-indigo-500/40 shadow-indigo-500/10' => in_array($table->id, $selectedTableIds),
-                                    'border-blue-500/30 bg-blue-50/5 dark:bg-blue-900/5' => $table->status->value === 'cleaning'
-                                ])
+                                @click="if ('{{ $table->status->value }}' !== 'cleaning' && '{{ $table->status->value }}' !== 'occupied') { isSelected = !isSelected }"
+                                class="w-full flex flex-col justify-between p-6 rounded-3xl bg-card border transition-all text-left group relative shadow-sm hover:shadow-md {{ $table->status->value === 'cleaning' ? 'border-blue-500/30 bg-blue-50/5 dark:bg-blue-900/5' : '' }}"
+                                :class="isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/40 shadow-indigo-500/10' : 'border-border/60 hover:border-indigo-500/50'"
                             >
-                                <div wire:loading wire:target="toggleTableSelection('{{ $table->id }}')" class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[2px] z-10 rounded-3xl">
-                                    <div class="size-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                                </div>
                                 <div class="flex items-start justify-between">
                                     <div class="flex flex-col">
                                         <span class="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1 font-mono">TBL-{{ $table->number }}</span>
@@ -129,12 +121,13 @@
                                         <i data-lucide="users" class="size-4"></i>
                                         <span class="text-xs font-bold">{{ $table->capacity }}</span>
                                     </div>
-                                    @if(in_array($table->id, $selectedTableIds))
+                                    <template x-if="isSelected">
                                         <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-600 text-white">
                                             <i data-lucide="check" class="size-3"></i>
                                             <span class="text-[9px] font-black uppercase tracking-widest">Selected</span>
                                         </div>
-                                    @elseif($table->status->value === 'occupied')
+                                    </template>
+                                    @if($table->status->value === 'occupied')
                                         <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-500">
                                             <span class="relative flex h-1.5 w-1.5">
                                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -318,6 +311,9 @@
                         </div>
                     @endforeach
                 </div>
+                <div class="mt-8">
+                    {{ $this->menuItems->links() }}
+                </div>
             </div>
 
         @elseif($view === 'summary')
@@ -422,8 +418,9 @@
                                 <i data-lucide="plus" class="size-6"></i>
                             </button>
 
-                            <button wire:click="submitOrder" class="h-14 flex-1 bg-indigo-600 hover:bg-indigo-500 rounded-xl flex items-center justify-center gap-3 text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all border border-border">
-                                <i data-lucide="send" class="size-4"></i>
+                            <button wire:click="submitOrder" wire:loading.attr="disabled" class="h-14 flex-1 bg-indigo-600 hover:bg-indigo-500 rounded-xl flex items-center justify-center gap-3 text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition-all border border-border disabled:opacity-50">
+                                <i data-lucide="send" class="size-4" wire:loading.remove wire:target="submitOrder"></i>
+                                <div wire:loading wire:target="submitOrder" class="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 Confirm & Send to Kitchen
                             </button>
                         </div>
@@ -752,12 +749,10 @@
                             <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
                                 @if($totals['remainingDue'] > 0.05)
                                     <button 
-                                        wire:click="initiatePayment"
-                                        wire:loading.attr="disabled"
-                                        class="h-14 col-span-2 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-3 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_10px_30px_rgba(16,185,129,0.2)] active:scale-95 border border-white/10 disabled:opacity-50"
+                                        @click="$wire.showPaymentModal = true"
+                                        class="h-14 col-span-2 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-3 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_10px_30px_rgba(16,185,129,0.2)] active:scale-95 border border-white/10"
                                     >
-                                        <i data-lucide="check-circle" class="size-5" wire:loading.remove></i>
-                                        <div wire:loading class="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <i data-lucide="check-circle" class="size-5"></i>
                                         Mark as Paid ({{ $currency }}{{ number_format($totals['remainingDue'], 2) }})
                                     </button>
                                 @else
@@ -765,6 +760,7 @@
                                         <button 
                                             wire:click="freeTables"
                                             wire:loading.attr="disabled"
+                                            wire:target="freeTables"
                                             @disabled(!$this->canCheckout)
                                             @class([
                                                 'w-full h-full rounded-2xl flex items-center justify-center gap-3 text-white text-[10px] font-black uppercase tracking-widest transition-all border border-white/10 shadow-lg disabled:opacity-50',
@@ -772,8 +768,8 @@
                                                 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-80' => !$this->canCheckout
                                             ])
                                         >
-                                            <i data-lucide="{{ $this->canCheckout ? 'log-out' : 'lock' }}" class="size-5" wire:loading.remove></i>
-                                            <div wire:loading class="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <i data-lucide="{{ $this->canCheckout ? 'log-out' : 'lock' }}" class="size-5" wire:loading.remove wire:target="freeTables"></i>
+                                            <div wire:loading wire:target="freeTables" class="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                             {{ $this->canCheckout ? 'Checkout & Free Tables' : 'Serve all items to Checkout' }}
                                         </button>
                                         
@@ -789,13 +785,14 @@
                                 <button 
                                     wire:click="addMoreItems"
                                     wire:loading.attr="disabled"
+                                    wire:target="addMoreItems"
                                     @class([
                                         'h-14 bg-secondary hover:bg-secondary/80 border border-border rounded-xl flex items-center justify-center gap-3 text-foreground text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50',
                                         'col-span-2' => !$this->canServeAnyReady
                                     ])
                                 >
-                                    <i data-lucide="plus" class="size-4 text-indigo-500" wire:loading.remove></i>
-                                    <div wire:loading class="size-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                                    <i data-lucide="plus" class="size-4 text-indigo-500" wire:loading.remove wire:target="addMoreItems"></i>
+                                    <div wire:loading wire:target="addMoreItems" class="size-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
                                     Add More
                                 </button>
 

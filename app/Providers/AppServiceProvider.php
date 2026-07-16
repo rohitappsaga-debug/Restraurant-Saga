@@ -21,9 +21,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Global currency symbol sharing
-        View::composer('*', function ($view) {
-            $view->with('currency', Setting::first()?->currency ?? '₹');
-        });
+        if (!app()->runningInConsole()) {
+            try {
+                $currency = Setting::current()?->currency ?? '₹';
+                View::share('currency', $currency);
+            } catch (\Exception $e) {
+                // Ignore if table doesn't exist yet
+            }
+        }
     }
 }

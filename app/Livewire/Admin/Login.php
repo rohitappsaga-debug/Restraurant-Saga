@@ -16,7 +16,7 @@ class Login extends Component
     #[Layout('layouts.guest')]
     public function render()
     {
-        $settings = Setting::first();
+        $settings = Setting::current();
         $restaurantName = $settings?->restaurant_name ?? 'Restaurant Management System';
         return view('livewire.admin.login', [
             'restaurantName' => $restaurantName

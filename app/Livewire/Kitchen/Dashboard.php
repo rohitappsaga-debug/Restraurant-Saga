@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Computed;
+use Livewire\WithPagination;
 
 class Dashboard extends Component
 {
+    use WithPagination;
+
     public $activeTab = 'all';
     public $view = 'orders'; // 'orders' or 'menu'
     public $searchTerm = '';
@@ -50,7 +53,7 @@ class Dashboard extends Component
         return MenuItem::query()
             ->when($this->searchTerm, fn($q) => $q->where('name', 'ilike', '%' . $this->searchTerm . '%'))
             ->when($this->selectedMenuCategory !== 'All', fn($q) => $q->where('category', $this->selectedMenuCategory))
-            ->get();
+            ->paginate(24);
     }
 
     #[Computed]

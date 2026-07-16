@@ -17,11 +17,12 @@ class Reports extends Component
     public $toDate;
     public $settings;
     public $datePreset = '7d';
+    public $version = 2;
 
     public function mount()
     {
         $this->setPreset('7d');
-        $this->settings = Setting::first()?->toArray() ?? ['currency' => '₹'];
+        $this->settings = Setting::current()?->toArray() ?? ['currency' => '₹'];
     }
 
     public function setPreset($preset)
@@ -139,15 +140,16 @@ class Reports extends Component
 
     public function getTopItemsProperty()
     {
-        $cacheKey = "admin.reports.top_items.{$this->fromDate}.{$this->toDate}";
+        $cacheKey = "admin.reports.v2.top_items.{$this->fromDate}.{$this->toDate}";
 
-        $rows = Cache::remember($cacheKey, 3600, function () {
+        $rows = Cache::remember($cacheKey, 60, function () {
             return DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->join('menu_items', 'order_items.menu_item_id', '=', 'menu_items.id')
                 ->join('categories', 'menu_items.category_id', '=', 'categories.id')
                 ->whereBetween('orders.created_at', [$this->fromDate . ' 00:00:00', $this->toDate . ' 23:59:59'])
                 ->where('orders.status', '!=', 'cancelled')
+                ->where('orders.is_paid', true)
                 ->select(
                     'menu_items.name',
                     'categories.name as category',
@@ -163,7 +165,7 @@ class Reports extends Component
                 ->toArray();
         });
 
-        return collect($rows)->map(fn ($row) => (object) $row);
+        return $rows;
     }
 
     public function render()

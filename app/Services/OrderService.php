@@ -114,7 +114,8 @@ class OrderService
      */
     public function syncOrderStatus(Order $order): void
     {
-        $itemStatuses = $order->orderItems()->pluck('status')->map(fn($s) => $s instanceof OrderStatus ? $s->value : $s)->toArray();
+        $items = $order->relationLoaded('orderItems') ? $order->orderItems : $order->orderItems()->get();
+        $itemStatuses = $items->pluck('status')->map(fn($s) => $s instanceof OrderStatus ? $s->value : $s)->toArray();
         
         if (empty($itemStatuses)) return;
 
